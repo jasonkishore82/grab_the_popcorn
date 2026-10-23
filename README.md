@@ -24,3 +24,6 @@ Luna's API lives in `server/luna.js`. The API key stays on the server and is nev
 ## Notes
 - Data is mock data in `src/data.js`; your list, friends and chats are saved in the browser (localStorage).
 - Friend replies are simulated. Hook up a backend + a movie API (e.g. TMDB) to make it real.
+
+## How it works
+See [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) for the architecture, the planned database (ratings, reviews, watchlist, watched) and how the recommendation system works.
