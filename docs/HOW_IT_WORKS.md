@@ -22,7 +22,7 @@ Grab the Popcorn is a place to keep track of movies and shows, rate and review t
 
 ```mermaid
 flowchart LR
-    U([User]) --> UI[React app<br/>Explore · My List · Friends · Chats · Luna]
+    U([User]) --> UI[React app<br/>Explore · My List · Friends · Messages · Luna]
     UI -->|ratings, reviews,<br/>watchlist, watched| API[Node server]
     API --> DB[(Database)]
     DB --> REC[Recommendation engine]
@@ -45,7 +45,7 @@ Every action the user takes (rate, review, add to watchlist, mark watched, add a
 | **Watchlist** | Title page → "+ Watchlist" | User wants to see it. Shown in its own row, and counts as a weak "interested" signal. |
 | **Remove** | Title page → "Remove" | Drops the entry. |
 | **Friends** | Friends page → "+ Add" | Friends' taste adds a "social" boost to titles they loved. |
-| **Chat messages** | Chats page | Stored for the conversation. Not used for recommendations. |
+| **Chat messages** | Messages page | Stored for the conversation. Not used for recommendations. |
 | **Questions to Luna** | Luna page | Stored as the Luna conversation. |
 | **Searches and filters** | Explore page | Not stored today. Could be logged later as a light interest signal. |
 
@@ -57,7 +57,7 @@ Every action the user takes (rate, review, add to watchlist, mark watched, add a
 
 | Part | File(s) | Job |
 |---|---|---|
-| Pages | `src/pages/*.jsx` | Explore, Title detail, My List, Friends, Chats, Luna |
+| Pages | `src/pages/*.jsx` | Explore, Title detail, My List, Friends, Messages, Luna |
 | App state | `src/store.jsx` | Holds the user's list, friends, chats and Luna chat, and saves them |
 | Sample data | `src/data.js` | 16 movies/shows and 5 sample people |
 | Router | `src/router.js` | Hash-based routes like `#/title/m1` |

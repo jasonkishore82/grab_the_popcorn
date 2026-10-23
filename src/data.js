@@ -1,15 +1,15 @@
 // Mock catalog and users. Swap these for a real API (e.g. TMDB) later.
 export const TITLES = [
-  { id: 'm1', title: 'Dune: Part Two', year: 2024, type: 'movie', genres: ['Sci-Fi', 'Adventure'], critics: 92, audience: 95, hue: 32, synopsis: 'Paul Atreides unites with the Fremen while on a path of revenge against those who destroyed his family.' },
-  { id: 'm2', title: 'Past Lives', year: 2023, type: 'movie', genres: ['Drama', 'Romance'], critics: 95, audience: 85, hue: 200, synopsis: 'Two childhood friends reunite in New York decades later and confront notions of love and destiny.' },
-  { id: 'm3', title: 'Oppenheimer', year: 2023, type: 'movie', genres: ['Drama', 'History'], critics: 93, audience: 91, hue: 12, synopsis: 'The story of J. Robert Oppenheimer and his role in the development of the atomic bomb.' },
-  { id: 'm4', title: 'Spider-Man: Across the Spider-Verse', year: 2023, type: 'movie', genres: ['Animation', 'Action'], critics: 95, audience: 94, hue: 330, synopsis: 'Miles Morales catapults across the Multiverse and meets a team of Spider-People.' },
-  { id: 'm5', title: 'Everything Everywhere All at Once', year: 2022, type: 'movie', genres: ['Sci-Fi', 'Comedy'], critics: 94, audience: 86, hue: 280, synopsis: 'A laundromat owner is swept into an adventure across the multiverse.' },
-  { id: 'm6', title: 'Parasite', year: 2019, type: 'movie', genres: ['Thriller', 'Drama'], critics: 99, audience: 90, hue: 140, synopsis: 'A poor family schemes to become employed by a wealthy household.' },
-  { id: 'm7', title: 'The Grand Budapest Hotel', year: 2014, type: 'movie', genres: ['Comedy'], critics: 92, audience: 86, hue: 345, synopsis: 'A legendary concierge and his lobby boy get caught up in a theft and a murder.' },
-  { id: 'm8', title: 'Interstellar', year: 2014, type: 'movie', genres: ['Sci-Fi', 'Drama'], critics: 73, audience: 86, hue: 220, synopsis: 'Explorers travel through a wormhole in search of a new home for humanity.' },
-  { id: 'm9', title: 'Spirited Away', year: 2001, type: 'movie', genres: ['Animation', 'Fantasy'], critics: 96, audience: 96, hue: 170, synopsis: 'A girl wanders into a world ruled by gods, witches and spirits.' },
-  { id: 'm10', title: 'Whiplash', year: 2014, type: 'movie', genres: ['Drama', 'Music'], critics: 94, audience: 94, hue: 45, synopsis: 'A young drummer is pushed to his limits by a ruthless instructor.' },
+  { id: 'm1', runtime: 166, title: 'Dune: Part Two', year: 2024, type: 'movie', genres: ['Sci-Fi', 'Adventure'], critics: 92, audience: 95, hue: 32, synopsis: 'Paul Atreides unites with the Fremen while on a path of revenge against those who destroyed his family.' },
+  { id: 'm2', runtime: 106, title: 'Past Lives', year: 2023, type: 'movie', genres: ['Drama', 'Romance'], critics: 95, audience: 85, hue: 200, synopsis: 'Two childhood friends reunite in New York decades later and confront notions of love and destiny.' },
+  { id: 'm3', runtime: 180, title: 'Oppenheimer', year: 2023, type: 'movie', genres: ['Drama', 'History'], critics: 93, audience: 91, hue: 12, synopsis: 'The story of J. Robert Oppenheimer and his role in the development of the atomic bomb.' },
+  { id: 'm4', runtime: 140, title: 'Spider-Man: Across the Spider-Verse', year: 2023, type: 'movie', genres: ['Animation', 'Action'], critics: 95, audience: 94, hue: 330, synopsis: 'Miles Morales catapults across the Multiverse and meets a team of Spider-People.' },
+  { id: 'm5', runtime: 139, title: 'Everything Everywhere All at Once', year: 2022, type: 'movie', genres: ['Sci-Fi', 'Comedy'], critics: 94, audience: 86, hue: 280, synopsis: 'A laundromat owner is swept into an adventure across the multiverse.' },
+  { id: 'm6', runtime: 132, title: 'Parasite', year: 2019, type: 'movie', genres: ['Thriller', 'Drama'], critics: 99, audience: 90, hue: 140, synopsis: 'A poor family schemes to become employed by a wealthy household.' },
+  { id: 'm7', runtime: 100, title: 'The Grand Budapest Hotel', year: 2014, type: 'movie', genres: ['Comedy'], critics: 92, audience: 86, hue: 345, synopsis: 'A legendary concierge and his lobby boy get caught up in a theft and a murder.' },
+  { id: 'm8', runtime: 169, title: 'Interstellar', year: 2014, type: 'movie', genres: ['Sci-Fi', 'Drama'], critics: 73, audience: 86, hue: 220, synopsis: 'Explorers travel through a wormhole in search of a new home for humanity.' },
+  { id: 'm9', runtime: 125, title: 'Spirited Away', year: 2001, type: 'movie', genres: ['Animation', 'Fantasy'], critics: 96, audience: 96, hue: 170, synopsis: 'A girl wanders into a world ruled by gods, witches and spirits.' },
+  { id: 'm10', runtime: 107, title: 'Whiplash', year: 2014, type: 'movie', genres: ['Drama', 'Music'], critics: 94, audience: 94, hue: 45, synopsis: 'A young drummer is pushed to his limits by a ruthless instructor.' },
   { id: 's1', title: 'The Bear', year: 2022, type: 'show', genres: ['Drama', 'Comedy'], critics: 99, audience: 88, hue: 0, synopsis: 'A fine-dining chef returns home to run his family\'s sandwich shop.' },
   { id: 's2', title: 'Severance', year: 2022, type: 'show', genres: ['Thriller', 'Sci-Fi'], critics: 97, audience: 92, hue: 190, synopsis: 'Office workers have their work and personal memories surgically divided.' },
   { id: 's3', title: 'Breaking Bad', year: 2008, type: 'show', genres: ['Crime', 'Drama'], critics: 96, audience: 97, hue: 90, synopsis: 'A chemistry teacher turns to making meth to secure his family\'s future.' },
@@ -37,3 +37,14 @@ export const REPLIES = [
 
 export const getTitle = (id) => TITLES.find((t) => t.id === id);
 export const getUser = (id) => USERS.find((u) => u.id === id);
+
+export const runtimeLabel = (t) => (t.runtime ? `${Math.floor(t.runtime / 60)}h ${t.runtime % 60}m` : 'Series');
+export const kindLabel = (t) => (t.type === 'show' ? 'Series' : 'Film');
+
+export function timeAgo(ts) {
+  const s = Math.max(1, Math.round((Date.now() - ts) / 1000));
+  if (s < 60) return 'just now';
+  const units = [['y', 31536000], ['mo', 2592000], ['w', 604800], ['d', 86400], ['h', 3600], ['m', 60]];
+  for (const [u, n] of units) if (s >= n) return `${Math.floor(s / n)}${u} ago`;
+  return 'just now';
+}

@@ -16,6 +16,7 @@ const Store = createContext(null);
 
 export function StoreProvider({ children }) {
   const [state, setState] = useState(load);
+  const [toasts, setToasts] = useState([]);
 
   useEffect(() => {
     try {
@@ -27,6 +28,12 @@ export function StoreProvider({ children }) {
 
   const api = {
     ...state,
+    toasts,
+    notify(text) {
+      const id = Date.now() + Math.random();
+      setToasts((t) => [...t.slice(-2), { id, text }]);
+      setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 2800);
+    },
     saveTitle(id, patch) {
       setState((s) => ({
         ...s,

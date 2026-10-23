@@ -7,7 +7,7 @@ A minimal React UI for saving your favourite movies & shows, finding friends and
 - **Title page** – add to Watchlist / mark Watched, rate 1–5 stars, write a review, start a discussion with a friend
 - **My List** – your Watched and Watchlist collections with ratings and reviews
 - **Friends** – search people by name or @handle, add/remove friends, see their favourites
-- **Chats** – one-to-one chat with friends, attach a movie/show card to any message
+- **Messages** – one-to-one chat with friends, attach a movie/show card to any message
 - **✨ Ask Luna** – an AI movie assistant (powered by Claude) that knows your list and your friends' taste. Ask for recommendations, spoiler-free summaries or what to watch together; titles she mentions become clickable cards
 
 ## Run it
