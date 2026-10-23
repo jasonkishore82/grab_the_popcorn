@@ -138,8 +138,8 @@ function Thread({ friend }) {
           <strong>{friend.name}</strong>
           <span className="muted small">@{friend.handle}</span>
         </div>
-        <a className="btn btn-quiet btn-sm" href={`#/u/${friend.handle}`}>
-          <Icon name="eye" size={15} /> Watchcase
+        <a className="btn btn-quiet btn-sm" href={`#/showcase/${friend.handle}`}>
+          <Icon name="film" size={15} /> Showcase
         </a>
       </div>
 

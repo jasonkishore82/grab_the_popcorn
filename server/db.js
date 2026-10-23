@@ -101,6 +101,9 @@ if (!columns('users').includes('email')) {
 if (!columns('library_entries').includes('times_watched')) {
   db.exec('ALTER TABLE library_entries ADD COLUMN times_watched INTEGER NOT NULL DEFAULT 1');
 }
+if (!columns('users').includes('bio')) {
+  db.exec('ALTER TABLE users ADD COLUMN bio TEXT; ALTER TABLE users ADD COLUMN avatar TEXT;');
+}
 db.exec(`
 CREATE UNIQUE INDEX IF NOT EXISTS users_by_email ON users (email COLLATE NOCASE) WHERE email IS NOT NULL;
 

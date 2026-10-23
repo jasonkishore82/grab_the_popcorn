@@ -11,7 +11,7 @@ import TitleDetail from './pages/TitleDetail';
 import Library from './pages/Library';
 import Friends from './pages/Friends';
 import Chat from './pages/Chat';
-import Profile from './pages/Profile';
+import Showcase from './pages/Showcase';
 import { ResetPassword, VerifyEmail } from './pages/Account';
 import { Notice } from './components/ui';
 import Luna from './pages/Luna';
@@ -19,6 +19,7 @@ import Luna from './pages/Luna';
 const NAV = [
   { key: '', href: '/', label: 'Explore', icon: 'compass' },
   { key: 'library', href: '/library', label: 'My List', icon: 'bookmark' },
+  { key: 'showcase', href: '/showcase', label: 'Showcase', icon: 'film' },
   { key: 'friends', href: '/friends', label: 'Friends', icon: 'users' },
   { key: 'chat', href: '/chat', label: 'Messages', icon: 'message' },
   { key: 'luna', href: '/luna', label: 'Ask Luna', icon: 'moon' },
@@ -72,7 +73,7 @@ export default function App() {
   else if (page === 'library') view = <Library />;
   else if (page === 'friends') view = <Friends />;
   else if (page === 'chat') view = <Chat id={param} />;
-  else if (page === 'u') view = <Profile key={param} handle={param} />;
+  else if (page === 'u' || page === 'showcase') view = <Showcase key={param || user?.handle || ''} handle={param} />;
   else if (page === 'verify') view = <VerifyEmail token={param} />;
   else if (page === 'reset') view = <ResetPassword token={param} />;
   else if (page === 'luna') view = <Luna key={param || ''} titleId={param} />;
@@ -116,7 +117,7 @@ export default function App() {
 
         {user ? (
           <div className="account-card">
-            <a href={`#/u/${user.handle}`} className="account-link" title="Your profile and Watchcase">
+            <a href="#/showcase" className="account-link" title="Your showcase">
               <Avatar user={user} size={34} />
               <div className="grow">
                 <strong className="ellipsis">{user.name}</strong>
@@ -164,9 +165,9 @@ export default function App() {
             </button>
             {menu && (
               <div className="popover popover-right" role="menu">
-                <a className="popover-user" href={`#/u/${user.handle}`} onClick={() => setMenu(false)}>
+                <a className="popover-user" href="#/showcase" onClick={() => setMenu(false)}>
                   <strong>{user.name}</strong>
-                  <span className="muted small">@{user.handle} · your Watchcase</span>
+                  <span className="muted small">@{user.handle} · your showcase</span>
                 </a>
                 <button
                   className="popover-item"

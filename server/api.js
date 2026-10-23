@@ -1,7 +1,7 @@
 // All API routes (mounted at /api). One shared database serves every user.
 import { HttpError, clientIp, json, limiter, readJson, sameOrigin } from './http.js';
 import { currentUser, forgotPassword, login, logout, register, requireUser, resendVerification, resetPassword, verifyEmailToken } from './auth.js';
-import { addFriend, conversations, listFriends, messagesWith, profile, removeFriend, searchPeople, sendMessage } from './social.js';
+import { addFriend, conversations, listFriends, messagesWith, profile, removeFriend, searchPeople, sendMessage, updateProfile } from './social.js';
 import { emailConfigured } from './email.js';
 import { catalog, deleteEntry, getTitleFull, idAliases, libraryFor, pruneOldSearches, putEntry, search, seedStarterTitles, warmStarterTitles } from './titles.js';
 import { handleLuna } from './luna.js';
@@ -76,6 +76,7 @@ export async function handleApi(req, res) {
       return json(res, 200, { people: searchPeople(currentUser(req), q.get('q')) });
     }
     if ((m = path.match(/^\/users\/([A-Za-z0-9_]{3,20})$/)) && method === 'GET') return json(res, 200, profile(currentUser(req), m[1]));
+    if (path === '/me/profile' && method === 'PUT') return json(res, 200, updateProfile(requireUser(req).id, await readJson(req, 300_000)));
     if (path === '/friends' && method === 'GET') return json(res, 200, listFriends(requireUser(req).id));
     if ((m = path.match(/^\/friends\/([A-Za-z0-9_]{3,20})$/))) {
       const user = requireUser(req);

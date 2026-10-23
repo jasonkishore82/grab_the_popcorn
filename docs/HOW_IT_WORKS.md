@@ -121,7 +121,7 @@ sequenceDiagram
 | `messages` | chat between friends (text, optional attached title, read time) |
 | `email_tokens` | single-use confirmation and password-reset links (only a hash is stored) |
 
-`users` also holds each person's email and whether it is confirmed. `library_entries` also holds `times_watched`, which powers the Watchcase.
+`users` also holds each person's email and whether it is confirmed, plus an optional bio and photo. `library_entries` also holds `times_watched`, which powers the Watchcase.
 
 ### Where the rest of the data lives
 
@@ -132,7 +132,7 @@ Only the Luna conversation is still saved in the browser's localStorage (key `po
 - **Find people.** Search by username or display name (2 or more characters). Results show how they relate to you (add, requested, accept, friends) and never include email addresses.
 - **Friends.** One person sends a request; the other accepts or declines. Chat is only possible between friends, and either person can unfriend.
 - **Chat.** Messages can attach any title. The open conversation checks for new messages every 3 seconds and the unread badge every 10 seconds.
-- **Watchcase.** A person's page (`#/u/username`) lists every title they marked as watched, with how many times (a counter on the title page), their star rating and review, plus totals. It is public; watchlists are private.
+- **Showcase.** The sidebar's Showcase page (`#/showcase`, or `#/showcase/username` for anyone) is an Instagram-style profile: a card with photo, name, bio and handle, the person's numbers (titles watched, total watches, friends, average rating), a grid of every title they marked as watched with how many times (a counter on the title page), and a Reviews tab. Clicking a tile opens it like a post. People can add a bio (160 characters) and a photo (cropped and shrunk in the browser, stored with the account). It is public; watchlists and emails are private. `#/u/username` links still work.
 - **Email.** Sign-up asks for an email and sends a confirmation link; "Forgot password" sends a one-hour reset link, which also signs the person out everywhere. Without a provider configured, the links are printed in the server console.
 
 ---
@@ -335,7 +335,8 @@ All routes are under `/api`. Reading is open to everyone; routes marked **accoun
 | `GET /titles/:imdbId` | anyone | One title (details fetched from OMDb the first time), the members' average, and every member's rating and comment |
 | `POST /auth/verify` · `POST /auth/forgot` · `POST /auth/reset` · `POST /auth/resend` | anyone (resend: account) | Email confirmation and password reset |
 | `GET /users?q=` | anyone | Find people by username or name |
-| `GET /users/:handle` | anyone | A profile with stats and the Watchcase |
+| `GET /users/:handle` | anyone | A showcase: profile, stats and everything watched |
+| `PUT /me/profile` | account | Save my bio and photo |
 | `GET /friends` · `POST /friends/:handle` · `DELETE /friends/:handle` | account | List, request or accept, and remove or decline friends |
 | `GET /chats` · `GET /chats/:handle?after=` · `POST /chats/:handle` | account | Conversations with unread counts, messages, and sending |
 | `PUT /titles/:imdbId/entry` | account | Save my `{status, rating, review, timesWatched}` for a title |

@@ -890,3 +890,48 @@ body { transition: background-color 0.25s, color 0.25s; }
 .person-bare { display: flex; }
 .person-bare .btn-row { flex-wrap: nowrap; width: 100%; }
 .profile-card { max-width: 340px; }
+
+/* ---------- Showcase ---------- */
+.showcase-head { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 48px; align-items: center; margin: 8px 0 36px; }
+.showcase-info { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.showcase-name { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.showcase-name h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(32px, 4vw, 48px); line-height: 1; }
+.showcase-name .person-bare { flex: 1; max-width: 300px; }
+.showcase-numbers { list-style: none; margin: 0; padding: 0; display: flex; gap: 28px; flex-wrap: wrap; font-size: 15px; color: var(--text-2); }
+.showcase-numbers strong { color: var(--text); font: 600 17px var(--mono); margin-right: 3px; }
+.showcase-bio { color: var(--text-2); max-width: 52ch; line-height: 1.55; }
+.showcase-bio strong { color: var(--text); }
+.ig-tabs { display: flex; justify-content: center; gap: 36px; border-top: 1px solid var(--line); margin-bottom: 4px; }
+.ig-tabs button { display: inline-flex; align-items: center; gap: 8px; height: 46px; margin-top: -1px; border-top: 2px solid transparent; font: 500 12.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.ig-tabs button.on { color: var(--text); border-top-color: var(--text); }
+.ig-tabs .count { color: var(--accent-text); }
+.ig-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.ig-tile { position: relative; display: block; aspect-ratio: 1 / 1; overflow: hidden; background: var(--surface); }
+.ig-tile .poster { position: absolute; inset: 0; width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; box-shadow: none; transition: transform 0.4s var(--ease); }
+.ig-tile .poster-img { object-position: center 25%; }
+.ig-tile:hover .poster, .ig-tile:focus-visible .poster { transform: scale(1.05); }
+.ig-hover { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 12px; text-align: center; color: #fff; background: rgba(0, 0, 0, 0.55); opacity: 0; transition: opacity 0.2s; font-size: 14px; }
+.ig-tile:hover .ig-hover, .ig-tile:focus-visible .ig-hover { opacity: 1; }
+.ig-tile .times-badge { z-index: 4; top: 8px; right: 8px; bottom: auto; }
+.you-too { position: absolute; left: 8px; top: 8px; z-index: 4; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--accent-ink); }
+.showcase-reviews { max-width: 760px; margin: 12px auto 0; }
+.rv-poster { flex-shrink: 0; }
+.post-modal { width: min(760px, 100%); display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 28px; text-align: left; padding: 28px; }
+.post-body { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; padding-top: 6px; }
+.post-body h2 { font-size: 30px; }
+.post-times { display: flex; align-items: center; gap: 6px; color: var(--text-2); font-size: 14px; }
+.post-review { font-size: 16px; line-height: 1.6; font-style: italic; color: var(--text-2); }
+.photo-edit { display: flex; align-items: center; gap: 16px; }
+.photo-preview { width: 80px; height: 100px; border-radius: 12px; background: var(--surface-3) center / cover; display: grid; place-items: center; color: var(--muted); flex-shrink: 0; }
+.photo-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.auth-form textarea { min-height: 80px; }
+@media (max-width: 860px) {
+  .showcase-head { grid-template-columns: 1fr; gap: 24px; justify-items: center; }
+  .showcase-info { width: 100%; }
+  .showcase-numbers { gap: 18px; }
+  .ig-tabs { gap: 20px; }
+  .post-modal { grid-template-columns: 1fr; padding: 22px 18px; }
+  .post-poster { max-width: 160px; }
+  .tabbar { grid-template-columns: repeat(6, 1fr); }
+  .tabbar a span { font-size: 10px; }
+}

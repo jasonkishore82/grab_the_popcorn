@@ -31,3 +31,15 @@ export function useTheme() {
 
   return [theme, setTheme];
 }
+
+// The theme currently shown ('dark' or 'light'), for components that take a theme prop.
+export function useThemeName() {
+  const read = () => document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+  const [name, setName] = useState(read);
+  useEffect(() => {
+    const obs = new MutationObserver(() => setName(read()));
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => obs.disconnect();
+  }, []);
+  return name;
+}

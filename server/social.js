@@ -7,7 +7,7 @@ const like = (s) => s.replace(/[\\%_]/g, '\\$&');
 const person = (u) => ({ handle: u.handle, name: u.name });
 
 export function userByHandle(handle) {
-  const u = db.prepare('SELECT id, handle, name, created_at FROM users WHERE handle = ?').get(String(handle ?? ''));
+  const u = db.prepare('SELECT id, handle, name, bio, avatar, created_at FROM users WHERE handle = ?').get(String(handle ?? ''));
   if (!u) throw new HttpError(404, 'Person not found');
   return u;
 }
@@ -88,7 +88,7 @@ export function profile(me, handle) {
   const watched = libraryFor(u.id, 'watched');
   const rated = watched.filter((w) => w.entry.rating > 0);
   return {
-    user: { ...person(u), joinedAt: u.created_at },
+    user: { ...person(u), bio: u.bio ?? '', avatar: u.avatar ?? null, joinedAt: u.created_at },
     isMe: me?.id === u.id,
     relation: relation(me?.id, u.id),
     stats: {
@@ -97,6 +97,7 @@ export function profile(me, handle) {
       ratings: rated.length,
       averageRating: rated.length ? Math.round((rated.reduce((n, w) => n + w.entry.rating, 0) / rated.length) * 10) / 10 : null,
       reviews: watched.filter((w) => w.entry.review).length,
+      friends: Number(db.prepare("SELECT COUNT(*) n FROM friendships WHERE status = 'accepted' AND (user_id = ? OR friend_id = ?)").get(u.id, u.id).n),
     },
     watchcase: watched,
   };
@@ -150,3 +151,18 @@ export function sendMessage(meId, handle, { text, titleId }) {
   return { message: messageJson(db.prepare('SELECT * FROM messages WHERE id = ?').get(info.lastInsertRowid), meId) };
 }
 export { toJson };
+
+// Bio and profile photo (a small image stored with the account).
+export function updateProfile(meId, { bio, avatar }) {
+  if (bio !== undefined) {
+    if (typeof bio !== 'string' || bio.trim().length > 160) throw new HttpError(400, 'Bio can be up to 160 characters');
+    db.prepare('UPDATE users SET bio = ? WHERE id = ?').run(bio.trim() || null, meId);
+  }
+  if (avatar !== undefined) {
+    if (avatar !== null && (typeof avatar !== 'string' || avatar.length > 200_000 || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(avatar))) {
+      throw new HttpError(400, 'Use a JPEG, PNG or WebP photo under about 150 KB');
+    }
+    db.prepare('UPDATE users SET avatar = ? WHERE id = ?').run(avatar, meId);
+  }
+  return { ok: true };
+}
