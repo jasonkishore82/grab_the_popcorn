@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 const KEY = 'popcorn-theme';
-const COLORS = { dark: '#0b0a09', light: '#f5f1e8' };
+const COLORS = { dark: '#0b0a09', light: '#ffffff' };
 
 const read = () => {
   try {
