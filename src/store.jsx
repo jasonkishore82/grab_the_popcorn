@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { REPLIES } from './data';
 
 const KEY = 'popcorn-state-v1';
-const initial = { library: {}, friends: ['u1'], chats: {} };
+const initial = { library: {}, friends: ['u1'], chats: {}, luna: [] };
 
 function load() {
   try {
@@ -45,6 +45,9 @@ export function StoreProvider({ children }) {
         ...s,
         friends: s.friends.includes(id) ? s.friends.filter((f) => f !== id) : [...s.friends, id],
       }));
+    },
+    setLuna(update) {
+      setState((s) => ({ ...s, luna: typeof update === 'function' ? update(s.luna) : update }));
     },
     sendMessage(friendId, text, titleId) {
       const msg = { from: 'me', text, titleId, ts: Date.now() };

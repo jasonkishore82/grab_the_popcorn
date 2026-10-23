@@ -4,12 +4,14 @@ import TitleDetail from './pages/TitleDetail';
 import Library from './pages/Library';
 import Friends from './pages/Friends';
 import Chat from './pages/Chat';
+import Luna from './pages/Luna';
 
 const NAV = [
   ['/', 'Explore', ''],
   ['/library', 'My List', 'library'],
   ['/friends', 'Friends', 'friends'],
   ['/chat', 'Chats', 'chat'],
+  ['/luna', '✨ Luna', 'luna'],
 ];
 
 export default function App() {
@@ -20,6 +22,7 @@ export default function App() {
   else if (page === 'library') view = <Library />;
   else if (page === 'friends') view = <Friends />;
   else if (page === 'chat') view = <Chat id={param} />;
+  else if (page === 'luna') view = <Luna key={param || ''} titleId={param} />;
   else view = <Explore />;
 
   return (

@@ -152,3 +152,43 @@ main { max-width: 1040px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
   .chat-layout:not(.has-active) .thread { display: none; }
   .thread-head .back { display: inline; }
 }
+
+/* Luna */
+:root { --luna: #8b5cf6; --luna-soft: color-mix(in srgb, var(--luna) 14%, var(--surface)); }
+nav a[href="#/luna"] { color: var(--luna); font-weight: 600; }
+.luna-btn { border-color: var(--luna); color: var(--luna); font-weight: 600; }
+.luna-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+.luna-head h1 { margin-bottom: 0.1rem; }
+.luna-head .link { white-space: nowrap; }
+.luna-head p { margin-bottom: 1rem; }
+.luna {
+  display: flex; flex-direction: column; height: calc(100vh - 210px); min-height: 420px;
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); overflow: hidden;
+}
+.luna .messages { gap: 0.6rem; }
+.luna-empty { margin: auto; text-align: center; max-width: 520px; display: flex; flex-direction: column; align-items: center; gap: 0.75rem; }
+.luna-orb {
+  width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-size: 1.8rem;
+  background: radial-gradient(circle at 30% 30%, #c4b5fd, var(--luna) 60%, #4c1d95);
+  box-shadow: 0 0 40px color-mix(in srgb, var(--luna) 45%, transparent);
+}
+.filters.center { justify-content: center; margin: 0; }
+.luna-msg { background: var(--luna-soft); max-width: 85%; }
+.luna-msg p { margin: 0 0 0.4rem; }
+.luna-msg p:last-child, .luna-msg ul:last-child { margin-bottom: 0; }
+.luna-msg ul { margin: 0.2rem 0 0.4rem; padding-left: 1.2rem; }
+.luna-msg code { font-size: 0.9em; }
+.luna-msg.error { border: 1px solid #ef4444; }
+.luna-titles { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; }
+.luna-title { display: flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem 0.25rem 0.25rem; font-size: 0.85rem; font-weight: 600; }
+.dots { display: inline-flex; gap: 4px; padding: 0.3rem 0; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--luna); animation: blink 1s infinite; }
+.dots i:nth-child(2) { animation-delay: 0.2s; }
+.dots i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+@media (max-width: 640px) {
+  nav a { padding: 0.35rem 0.5rem; }
+  .luna { height: calc(100vh - 240px); }
+  .luna-msg { max-width: 92%; }
+}
+.luna .composer .primary { background: var(--luna); border-color: var(--luna); color: #fff; }

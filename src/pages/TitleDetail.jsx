@@ -48,6 +48,7 @@ export default function TitleDetail({ id }) {
             </button>
             {saved && <button className="link" onClick={() => removeTitle(id)}>Remove</button>}
             <button onClick={() => setSharing(!sharing)}>💬 Discuss</button>
+            <button className="luna-btn" onClick={() => go(`/luna/${id}`)}>✨ Ask Luna</button>
           </div>
 
           {sharing && (
