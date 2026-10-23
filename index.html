@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0b0a09" />
+    <script>
+      try {
+        if (localStorage.getItem('popcorn-theme') === 'light') {
+          document.documentElement.dataset.theme = 'light';
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f5f1e8');
+        }
+      } catch (e) {}
+    </script>
     <title>Grab the Popcorn</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

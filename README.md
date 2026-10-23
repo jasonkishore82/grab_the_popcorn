@@ -10,6 +10,7 @@ A minimal React UI for saving your favourite movies & shows, finding friends and
 - **My List** – your Watched and Watchlist collections with ratings and reviews
 - **Friends** – search people by name or @handle, add/remove friends, see their favourites
 - **Messages** – one-to-one chat with friends, attach a movie/show card to any message
+- **Light and dark mode** – dark by default; switch with the Light/Dark control at the bottom of the sidebar (or the button in the phone header). Your choice is remembered
 - **Ask Luna** – an AI movie assistant (powered by Claude) that knows your list and your friends' taste. Ask for recommendations, spoiler-free summaries or what to watch together; titles she mentions become clickable cards
 
 ## Run it

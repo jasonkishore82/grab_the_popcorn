@@ -1,4 +1,5 @@
 import { useRoute } from './router';
+import { useTheme } from './theme';
 import { useStore } from './store';
 import { getUser } from './data';
 import Icon from './components/Icon';
@@ -39,6 +40,7 @@ function Brand({ compact = false }) {
 export default function App() {
   const [page = '', param] = useRoute();
   const { library, friends, toasts } = useStore();
+  const [theme, setTheme] = useTheme();
   const listCount = Object.keys(library).length;
 
   let view;
@@ -82,10 +84,27 @@ export default function App() {
             <span>Ask Luna for a pick</span>
           </div>
         </a>
+
+        <div className="theme-switch" role="group" aria-label="Colour theme">
+          <button className={theme === 'light' ? 'on' : ''} onClick={() => setTheme('light')} aria-pressed={theme === 'light'}>
+            <Icon name="sun" size={15} /> Light
+          </button>
+          <button className={theme === 'dark' ? 'on' : ''} onClick={() => setTheme('dark')} aria-pressed={theme === 'dark'}>
+            <Icon name="contrast" size={15} /> Dark
+          </button>
+        </div>
       </aside>
 
       <header className="mobile-top">
         <Brand compact />
+        <button
+          className="btn btn-quiet btn-icon"
+          onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+          aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+          title={theme === 'light' ? 'Dark mode' : 'Light mode'}
+        >
+          <Icon name={theme === 'light' ? 'contrast' : 'sun'} size={19} />
+        </button>
       </header>
 
       <main className="content">
