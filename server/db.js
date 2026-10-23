@@ -93,6 +93,50 @@ CREATE TABLE IF NOT EXISTS library_entries (
 CREATE INDEX IF NOT EXISTS library_by_title ON library_entries (title_id, updated_at DESC);
 `);
 
+// Later additions (safe to run on an existing database)
+const columns = (table) => db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);
+if (!columns('users').includes('email')) {
+  db.exec('ALTER TABLE users ADD COLUMN email TEXT; ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0;');
+}
+if (!columns('library_entries').includes('times_watched')) {
+  db.exec('ALTER TABLE library_entries ADD COLUMN times_watched INTEGER NOT NULL DEFAULT 1');
+}
+db.exec(`
+CREATE UNIQUE INDEX IF NOT EXISTS users_by_email ON users (email COLLATE NOCASE) WHERE email IS NOT NULL;
+
+-- Links sent by email: confirm an address, or reset a password. Only a hash of the token is stored.
+CREATE TABLE IF NOT EXISTS email_tokens (
+  token_hash TEXT PRIMARY KEY,
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  kind       TEXT NOT NULL CHECK (kind IN ('verify', 'reset')),
+  expires_at INTEGER NOT NULL
+);
+
+-- One row per pair: the requester, the other person, and whether they accepted.
+CREATE TABLE IF NOT EXISTS friendships (
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  friend_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status     TEXT NOT NULL CHECK (status IN ('pending', 'accepted')),
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (user_id, friend_id),
+  CHECK (user_id <> friend_id)
+);
+CREATE INDEX IF NOT EXISTS friendships_by_friend ON friendships (friend_id);
+
+-- Chat between friends.
+CREATE TABLE IF NOT EXISTS messages (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  sender_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  recipient_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  body         TEXT NOT NULL,
+  title_id     TEXT REFERENCES titles(id) ON DELETE SET NULL ON UPDATE CASCADE,
+  created_at   INTEGER NOT NULL,
+  read_at      INTEGER
+);
+CREATE INDEX IF NOT EXISTS messages_pair ON messages (sender_id, recipient_id, id);
+CREATE INDEX IF NOT EXISTS messages_inbox ON messages (recipient_id, read_at);
+`);
+
 export const now = () => Date.now();
 
 export function tx(fn) {

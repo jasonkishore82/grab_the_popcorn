@@ -11,6 +11,8 @@ A minimal React UI for saving your favourite movies & shows, finding friends and
 - **Friends** – search people by name or @handle, add/remove friends, see their favourites
 - **Messages** – one-to-one chat with friends, attach a movie/show card to any message
 - **Light and dark mode** – dark by default; switch with the Light/Dark control at the bottom of the sidebar (or the button in the phone header). Your choice is remembered
+- **People, friends and chat** – find people by username, send friend requests, chat with friends (attach any title), and open anyone's profile
+- **Watchcase** – every title a person has watched, with how many times and their rating and review
 - **Accounts and shared reviews** – sign up, then rate and comment on any title; everyone sees the community rating and each member's review
 - **Ask Luna** – an AI movie assistant (powered by Claude) that knows your list and your friends' taste. Ask for recommendations, spoiler-free summaries or what to watch together; titles she mentions become clickable cards
 
@@ -28,6 +30,8 @@ For production: `npm run build && npm start` (serves the app and the API routes 
 |---|---|---|
 | `OMDB_API_KEY` | Fills in posters, plot, director, cast, rating, awards and real Rotten Tomatoes / IMDb / Metacritic scores, and lets you search titles beyond the built-in catalogue | https://www.omdbapi.com/apikey.aspx (free: 1,000 requests a day; activate it from the email) |
 | `ANTHROPIC_API_KEY` | Powers Luna | https://console.anthropic.com/ |
+| `RESEND_API_KEY` **or** `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | Sends the email-confirmation and password-reset emails. Use Resend, or Zoho Mail (host `smtp.zoho.com`, port 465, an app-specific password) | https://resend.com/ · https://www.zoho.com/mail/ |
+| `EMAIL_FROM`, `APP_URL` | Sender address (must be on a domain you verified with the provider) and your site's public address for links in emails | |
 
 `.env` is git-ignored, so keys are never committed. If the variables are already set in your environment (for example as hosting secrets), those win over the file. Restart the server after changing `.env`.
 
@@ -43,10 +47,12 @@ Both keys stay on the server (`server/omdb.js`, `server/luna.js`) and are never 
 - You can browse and read everything without an account. Rating, commenting, saving to your list and asking Luna need one (create it from the sidebar or the dialog that appears).
 - Everything is stored in a SQLite database file, `data/popcorn.db` (git-ignored, created automatically; override with `DATABASE_FILE`). **Back this file up**: it holds every member's account, list, rating and comment. Needs Node 22.13 or newer.
 - Passwords are hashed (scrypt), sign-in uses an HttpOnly cookie, and nothing secret is sent to the browser.
-- Friends and chats are still samples kept in the browser; real friends and live chat are next.
+- Sign-up asks for an email. We send a confirmation link and use it for password resets. If no email provider is set up, the links are printed in the server console instead, so you can still develop and test. Email sending with **Resend** was tested against a stand-in server; **Zoho/SMTP** is wired up but untested, so send yourself a test sign-up once.
+- Friends: send a request by username; chat opens once it is accepted. Chat updates every few seconds (no websockets yet).
+- Profiles are public: anyone can open `#/u/<username>` to see someone's Watchcase (watched titles, times watched, ratings, reviews). Watchlists and emails are private.
 
 ## Notes
-- Friends, chats and their replies are samples for now (kept in the browser). Everything else is real and shared.
+- Only the Luna conversation is kept in the browser. Everything else is stored on the server.
 
 ## How it works
 See [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) for the architecture, the planned database (ratings, reviews, watchlist, watched) and how the recommendation system works.

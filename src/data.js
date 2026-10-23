@@ -1,4 +1,4 @@
-// Starter catalogue (seeded into the shared database) and sample people. IMDb ids are the title ids.
+// Starter catalogue (seeded into the shared database). IMDb ids are the title ids.
 export const TITLES = [
   { id: 'tt15239678', runtime: 166, title: 'Dune: Part Two', year: 2024, type: 'movie', genres: ['Sci-Fi', 'Adventure'], hue: 32, synopsis: 'Paul Atreides unites with the Fremen while on a path of revenge against those who destroyed his family.' },
   { id: 'tt13238346', runtime: 106, title: 'Past Lives', year: 2023, type: 'movie', genres: ['Drama', 'Romance'], hue: 200, synopsis: 'Two childhood friends reunite in New York decades later and confront notions of love and destiny.' },
@@ -16,23 +16,6 @@ export const TITLES = [
   { id: 'tt2788316', title: 'Shōgun', year: 2024, type: 'show', genres: ['Drama', 'History'], hue: 5, synopsis: 'An English navigator becomes entangled in a feudal Japanese power struggle.' },
   { id: 'tt5687612', title: 'Fleabag', year: 2016, type: 'show', genres: ['Comedy', 'Drama'], hue: 320, synopsis: 'A dry-witted woman navigates life and love in London.' },
   { id: 'tt11126994', title: 'Arcane', year: 2021, type: 'show', genres: ['Animation', 'Action'], hue: 260, synopsis: 'Two sisters end up on opposite sides of a war between rival cities.' },
-];
-
-export const USERS = [
-  { id: 'u1', name: 'Maya Chen', handle: 'mayawatches', bio: 'A24 apologist. Will cry at anything.', favs: ['tt13238346', 'tt6710474', 'tt5687612'] },
-  { id: 'u2', name: 'Leo Martins', handle: 'leoreels', bio: 'Nolan, Villeneuve, repeat.', favs: ['tt15239678', 'tt15398776', 'tt0816692'] },
-  { id: 'u3', name: 'Priya Rao', handle: 'priyapopcorn', bio: 'Animation is cinema.', favs: ['tt9362722', 'tt0245429', 'tt11126994'] },
-  { id: 'u4', name: 'Sam Okafor', handle: 'samseries', bio: 'Mostly TV. Mostly prestige.', favs: ['tt11280740', 'tt0903747', 'tt2788316'] },
-  { id: 'u5', name: 'Ella Novak', handle: 'ellanoir', bio: 'Thrillers and slow burns.', favs: ['tt6751668', 'tt2582802', 'tt14452776'] },
-];
-
-export const REPLIES = [
-  'Oh I loved that one!',
-  'Still on my watchlist, no spoilers please.',
-  'The ending though…',
-  'Rewatch party this weekend?',
-  'Honestly overrated, fight me.',
-  'The soundtrack alone is a 10/10.',
 ];
 
 // Old ids from earlier versions of the app (saved lists, chats, links) still work.
@@ -78,7 +61,6 @@ export function registerTitles(list, { replaceStarters = false } = {}) {
 export const getTitle = (id) => registry.get(canonicalId(id));
 export const allTitles = () => [...registry.values()];
 
-export const getUser = (id) => USERS.find((u) => u.id === id);
 
 export const runtimeLabel = (t) => (!t.runtime ? '' : t.type === 'show' ? `${t.runtime} min episodes` : `${Math.floor(t.runtime / 60)}h ${t.runtime % 60}m`);
 export const kindLabel = (t) => (t.type === 'show' ? 'Series' : 'Film');

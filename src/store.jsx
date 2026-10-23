@@ -1,12 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useReducer, useRef, useState } from 'react';
-import { REPLIES, canonicalId, getTitle, registerAliases, registerTitles } from './data';
+import { canonicalId, getTitle, registerAliases, registerTitles } from './data';
 import { api } from './api';
 
 const KEY = 'popcorn-state-v1';
 const LEGACY_KEY = 'popcorn-legacy-library';
+const NO_SOCIAL = { friends: [], incoming: [], outgoing: [] };
+const NO_CHAT = { conversations: [], unread: 0 };
 
-// Friends, chats and the Luna conversation still live in this browser (sample people for now).
-// Everything about titles, ratings, comments and lists is on the server.
+// Only the Luna conversation lives in this browser. Everything else is on the server.
 function loadLocal() {
   try {
     const s = JSON.parse(localStorage.getItem(KEY)) || {};
@@ -14,9 +15,9 @@ function loadLocal() {
     if (s.library && Object.keys(s.library).length && !localStorage.getItem(LEGACY_KEY)) {
       localStorage.setItem(LEGACY_KEY, JSON.stringify(s.library));
     }
-    return { friends: s.friends ?? ['u1'], chats: s.chats ?? {}, luna: s.luna ?? [] };
+    return { luna: s.luna ?? [] };
   } catch {
-    return { friends: ['u1'], chats: {}, luna: [] };
+    return { luna: [] };
   }
 }
 
@@ -28,6 +29,9 @@ export function StoreProvider({ children }) {
   const [ready, setReady] = useState(false); // true once we know whether someone is signed in
   const [library, setLibrary] = useState({}); // the signed-in user's entries, by title id
   const [omdb, setOmdb] = useState(null); // does the server have an OMDb key?
+  const [emailOn, setEmailOn] = useState(false); // can the server send email?
+  const [social, setSocial] = useState(NO_SOCIAL); // friends and friend requests
+  const [chat, setChat] = useState(NO_CHAT); // conversation list and unread count
   const [toasts, setToasts] = useState([]);
   const [authDialog, setAuthDialog] = useState(null); // null | { reason, mode }
   const [saved, setSaved] = useState({ id: null, at: 0 }); // bumps after each successful save so pages can refresh
@@ -72,6 +76,25 @@ export function StoreProvider({ children }) {
     }
   }, [addTitles]);
 
+  // Friends, requests, conversations and the unread count.
+  const refreshSocial = useCallback(async () => {
+    try {
+      const [f, c] = await Promise.all([api('/friends'), api('/chats')]);
+      setSocial(f);
+      setChat(c);
+    } catch {
+      /* try again on the next poll */
+    }
+  }, []);
+
+  const refreshMe = useCallback(async () => {
+    const { user: me, omdb: configured, email } = await api('/auth/me');
+    setUser(me);
+    setOmdb(configured);
+    setEmailOn(Boolean(email));
+    return me;
+  }, []);
+
   // Bring in a list that an earlier version kept in this browser, without touching entries the account already has.
   const importLegacy = useCallback(
     async (existing) => {
@@ -106,12 +129,8 @@ export function StoreProvider({ children }) {
   useEffect(() => {
     (async () => {
       try {
-        const { user: me, omdb: configured } = await api('/auth/me');
-        setOmdb(configured);
-        if (me) {
-          setUser(me);
-          await loadLibrary();
-        }
+        const me = await refreshMe();
+        if (me) await loadLibrary();
       } catch {
         /* server unavailable: browse the starter titles only */
       } finally {
@@ -119,7 +138,19 @@ export function StoreProvider({ children }) {
       }
       loadCatalog();
     })();
-  }, [loadLibrary, loadCatalog]);
+  }, [refreshMe, loadLibrary, loadCatalog]);
+
+  // While signed in, keep friends and the unread count fresh.
+  useEffect(() => {
+    if (!user) {
+      setSocial(NO_SOCIAL);
+      setChat(NO_CHAT);
+      return undefined;
+    }
+    refreshSocial();
+    const timer = setInterval(() => !document.hidden && refreshSocial(), 10000);
+    return () => clearInterval(timer);
+  }, [user?.id, refreshSocial]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openAuth = useCallback((reason, mode = 'signin') => setAuthDialog({ reason, mode }), []);
 
@@ -143,7 +174,7 @@ export function StoreProvider({ children }) {
       try {
         const { entry, title } = await api(`/titles/${id}/entry`, { method: 'PUT', body: item.patch });
         addTitles([title]);
-        setLibrary((l) => (l[id] ? { ...l, [id]: { ...l[id], status: entry.status, addedAt: entry.addedAt } } : l));
+        setLibrary((l) => (l[id] ? { ...l, [id]: { ...l[id], status: entry.status, timesWatched: entry.timesWatched, addedAt: entry.addedAt } } : l));
         setSaved({ id, at: Date.now() });
       } catch (e) {
         if (e.status === 401) {
@@ -158,12 +189,15 @@ export function StoreProvider({ children }) {
     [addTitles, notify, openAuth],
   );
 
-  const api2 = {
+  const value = {
     ...local,
     user,
     ready,
     library,
     omdb,
+    emailOn,
+    social,
+    chat,
     toasts,
     authDialog,
     saved,
@@ -172,13 +206,15 @@ export function StoreProvider({ children }) {
     closeAuth: () => setAuthDialog(null),
     loadCatalog,
     addTitles,
+    refreshSocial,
+    refreshMe,
 
     async login(handle, password) {
       const { user: me } = await api('/auth/login', { method: 'POST', body: { handle, password } });
       await afterSignIn(me, 'Welcome back');
     },
-    async register(handle, name, password) {
-      const { user: me } = await api('/auth/register', { method: 'POST', body: { handle, name, password } });
+    async register(handle, name, email, password) {
+      const { user: me } = await api('/auth/register', { method: 'POST', body: { handle, name, email, password } });
       await afterSignIn(me, 'Welcome');
     },
     async logout() {
@@ -199,7 +235,8 @@ export function StoreProvider({ children }) {
       return data;
     },
 
-    // Watchlist / watched / rating / comment for the signed-in user. Shows at once, saves to the server a moment later.
+    // Watchlist / watched / rating / comment / times watched for the signed-in user.
+    // Shows at once, saves to the server a moment later.
     saveTitle(rawId, patch) {
       if (!user) {
         openAuth('Sign in to save titles, rate them and write reviews.');
@@ -208,7 +245,12 @@ export function StoreProvider({ children }) {
       const id = canonicalId(rawId);
       const applied = { ...patch };
       if (applied.rating > 0 && (applied.status ?? library[id]?.status ?? 'watchlist') === 'watchlist') applied.status = 'watched';
-      setLibrary((l) => ({ ...l, [id]: { status: 'watchlist', rating: 0, review: '', addedAt: Date.now(), ...l[id], ...applied } }));
+      setLibrary((l) => {
+        const cur = l[id];
+        const status = applied.status ?? cur?.status ?? 'watchlist';
+        const times = status === 'watched' ? applied.timesWatched ?? (cur?.status === 'watched' ? cur.timesWatched : 1) : 0;
+        return { ...l, [id]: { rating: 0, review: '', addedAt: Date.now(), ...cur, ...applied, status, timesWatched: times } };
+      });
       const cur = queue.current.get(id);
       clearTimeout(cur?.timer);
       queue.current.set(id, { patch: { ...cur?.patch, ...applied }, timer: setTimeout(() => flush(id), 'review' in patch ? 600 : 40) });
@@ -231,24 +273,28 @@ export function StoreProvider({ children }) {
       }
     },
 
-    toggleFriend(id) {
-      setLocal((s) => ({ ...s, friends: s.friends.includes(id) ? s.friends.filter((f) => f !== id) : [...s.friends, id] }));
+    // People
+    async addFriend(handle) {
+      if (!user) return openAuth('Sign in to add friends.');
+      const { relation } = await api(`/friends/${handle}`, { method: 'POST' });
+      await refreshSocial();
+      return relation;
+    },
+    async removeFriend(handle) {
+      await api(`/friends/${handle}`, { method: 'DELETE' });
+      await refreshSocial();
+    },
+    async sendChat(handle, text, titleId) {
+      const { message } = await api(`/chats/${handle}`, { method: 'POST', body: { text, titleId } });
+      refreshSocial();
+      return message;
     },
     setLuna(update) {
       setLocal((s) => ({ ...s, luna: typeof update === 'function' ? update(s.luna) : update }));
     },
-    sendMessage(friendId, text, titleId) {
-      const msg = { from: 'me', text, titleId, ts: Date.now() };
-      setLocal((s) => ({ ...s, chats: { ...s.chats, [friendId]: [...(s.chats[friendId] || []), msg] } }));
-      // Fake reply so the chat feels alive until friends are real people.
-      setTimeout(() => {
-        const reply = { from: friendId, text: REPLIES[Math.floor(Math.random() * REPLIES.length)], ts: Date.now() };
-        setLocal((s) => ({ ...s, chats: { ...s.chats, [friendId]: [...(s.chats[friendId] || []), reply] } }));
-      }, 1200);
-    },
   };
 
-  return <Store.Provider value={api2}>{children}</Store.Provider>;
+  return <Store.Provider value={value}>{children}</Store.Provider>;
 }
 
 export const useStore = () => useContext(Store);

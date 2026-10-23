@@ -14,7 +14,8 @@ This doc explains how the app works today (accounts and a shared database are bu
 
 > **Status.**
 > - **Built:** accounts, the shared database (SQLite), the shared title catalogue filled from OMDb, and everyone's watchlist, watched list, star ratings and comments. See section 3.
-> - **Not built yet:** real friends and live chat (the people and replies in those screens are samples), the recommendation system, and moving from SQLite to PostgreSQL. Sections 4 and 6 to 9 are the design for these.
+> - **Also built:** finding people by username, friend requests, chat between friends, public profiles with a **Watchcase** (everything a person has watched, how many times, their rating and review), and email (confirmation and password reset) through Resend or Zoho.
+> - **Not built yet:** the recommendation system, live chat over websockets (chat polls every few seconds), and moving from SQLite to PostgreSQL. Sections 4 and 6 to 9 are the design for these.
 
 ---
 
@@ -116,16 +117,29 @@ sequenceDiagram
 | `search_cache` | searches already answered, so the next identical search needs no OMDb call |
 | `library_entries` | **everyone's** watchlist / watched status, star rating and comment: one row per member per title |
 | `id_aliases` | old id to new id for starter titles whose IMDb id was corrected |
+| `friendships` | one row per pair: who asked, and whether it was accepted |
+| `messages` | chat between friends (text, optional attached title, read time) |
+| `email_tokens` | single-use confirmation and password-reset links (only a hash is stored) |
+
+`users` also holds each person's email and whether it is confirmed. `library_entries` also holds `times_watched`, which powers the Watchcase.
 
 ### Where the rest of the data lives
 
-Friends, chats and the Luna conversation are still saved in the browser's localStorage (key `popcorn-state-v1`), because the people in Friends are samples for now. Everything about titles, lists, ratings and comments is on the server.
+Only the Luna conversation is still saved in the browser's localStorage (key `popcorn-state-v1`). Everything else, including friends and chat, is on the server.
+
+### People, friends, chat and the Watchcase
+
+- **Find people.** Search by username or display name (2 or more characters). Results show how they relate to you (add, requested, accept, friends) and never include email addresses.
+- **Friends.** One person sends a request; the other accepts or declines. Chat is only possible between friends, and either person can unfriend.
+- **Chat.** Messages can attach any title. The open conversation checks for new messages every 3 seconds and the unread badge every 10 seconds.
+- **Watchcase.** A person's page (`#/u/username`) lists every title they marked as watched, with how many times (a counter on the title page), their star rating and review, plus totals. It is public; watchlists are private.
+- **Email.** Sign-up asks for an email and sends a confirmation link; "Forgot password" sends a one-hour reset link, which also signs the person out everywhere. Without a provider configured, the links are printed in the server console.
 
 ---
 
 ## 4. The database
 
-**Built today:** SQLite (a single file, no setup), with the six tables listed in section 3. **Planned:** PostgreSQL once the app needs several servers; the fuller design below works in both with small changes. The tables for friends, messages, review comments, the event log and precomputed recommendations are not built yet.
+**Built today:** SQLite (a single file, no setup), with the nine tables listed in section 3. **Planned:** PostgreSQL once the app needs several servers; the fuller design below works in both with small changes. Review comments, the event log and precomputed recommendations are not built yet.
 
 ### Tables at a glance
 
@@ -319,7 +333,12 @@ All routes are under `/api`. Reading is open to everyone; routes marked **accoun
 | `GET /catalog` | anyone | Every title in the shared catalogue, with community rating stats |
 | `GET /search?q=&kind=all\|movie\|show` | anyone | Searches the shared database first; asks OMDb only for searches nobody has made; saves what it finds |
 | `GET /titles/:imdbId` | anyone | One title (details fetched from OMDb the first time), the members' average, and every member's rating and comment |
-| `PUT /titles/:imdbId/entry` | account | Save my `{status, rating, review}` for a title |
+| `POST /auth/verify` · `POST /auth/forgot` · `POST /auth/reset` · `POST /auth/resend` | anyone (resend: account) | Email confirmation and password reset |
+| `GET /users?q=` | anyone | Find people by username or name |
+| `GET /users/:handle` | anyone | A profile with stats and the Watchcase |
+| `GET /friends` · `POST /friends/:handle` · `DELETE /friends/:handle` | account | List, request or accept, and remove or decline friends |
+| `GET /chats` · `GET /chats/:handle?after=` · `POST /chats/:handle` | account | Conversations with unread counts, messages, and sending |
+| `PUT /titles/:imdbId/entry` | account | Save my `{status, rating, review, timesWatched}` for a title |
 | `DELETE /titles/:imdbId/entry` | account | Remove it from my list |
 | `GET /me/library` | account | My watchlist and watched titles |
 | `POST /luna` | account | Ask Luna (streams text) |
@@ -328,14 +347,11 @@ Safeguards: passwords are hashed with scrypt; sessions are HttpOnly, SameSite co
 
 ### Planned
 
-
 | Method & path | What it does |
 |---|---|
-| `GET /api/users?q=` | Search people by name or @handle |
-| `POST /api/me/friends/:userId` · `DELETE …` | Add or remove a friend |
-| `GET /api/conversations` · `POST /api/conversations/:id/messages` | Friend chats (live updates via WebSocket) |
-| `POST /api/reviews/:userId/:titleId/comments` | Comment on a friend's review |
+| `POST /api/reviews/:userId/:titleId/comments` | Comment on someone's review |
 | `GET /api/me/recommendations?limit=20` | "For you" list with reasons |
+
 
 ---
 

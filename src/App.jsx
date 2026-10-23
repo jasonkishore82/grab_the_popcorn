@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRoute } from './router';
 import { useTheme } from './theme';
 import { useStore } from './store';
-import { getUser } from './data';
+import { api } from './api';
 import Icon from './components/Icon';
 import Avatar from './components/Avatar';
 import AuthDialog from './components/AuthDialog';
@@ -11,6 +11,9 @@ import TitleDetail from './pages/TitleDetail';
 import Library from './pages/Library';
 import Friends from './pages/Friends';
 import Chat from './pages/Chat';
+import Profile from './pages/Profile';
+import { ResetPassword, VerifyEmail } from './pages/Account';
+import { Notice } from './components/ui';
 import Luna from './pages/Luna';
 
 const NAV = [
@@ -41,7 +44,12 @@ function Brand({ compact = false }) {
 
 export default function App() {
   const [page = '', param] = useRoute();
-  const { user, library, friends, toasts, openAuth, logout } = useStore();
+  const { user, library, social, chat, emailOn, notify, toasts, openAuth, closeAuth, logout } = useStore();
+
+  // Moving to another page (for example by opening an email link) closes the sign-in dialog.
+  useEffect(() => {
+    closeAuth();
+  }, [page, param]); // eslint-disable-line react-hooks/exhaustive-deps
   const [theme, setTheme] = useTheme();
   const [menu, setMenu] = useState(false);
   const menuRef = useRef(null);
@@ -64,6 +72,9 @@ export default function App() {
   else if (page === 'library') view = <Library />;
   else if (page === 'friends') view = <Friends />;
   else if (page === 'chat') view = <Chat id={param} />;
+  else if (page === 'u') view = <Profile key={param} handle={param} />;
+  else if (page === 'verify') view = <VerifyEmail token={param} />;
+  else if (page === 'reset') view = <ResetPassword token={param} />;
   else if (page === 'luna') view = <Luna key={param || ''} titleId={param} />;
   else view = <Explore />;
 
@@ -77,15 +88,17 @@ export default function App() {
               <Icon name={n.icon} size={18} />
               <span>{n.label}</span>
               {n.key === 'library' && listCount > 0 && <span className="nav-count">{listCount}</span>}
+              {n.key === 'chat' && chat.unread > 0 && <span className="nav-count unread">{chat.unread}</span>}
+              {n.key === 'friends' && social.incoming.length > 0 && <span className="nav-count unread">{social.incoming.length}</span>}
             </a>
           ))}
         </nav>
 
-        {friends.length > 0 && (
+        {social.friends.length > 0 && (
           <div className="side-section">
             <span className="side-label">Friends</span>
-            {friends.slice(0, 5).map(getUser).map((u) => (
-              <a key={u.id} href={`#/chat/${u.id}`} className="side-friend">
+            {social.friends.slice(0, 5).map((u) => (
+              <a key={u.handle} href={`#/chat/${u.handle}`} className="side-friend">
                 <Avatar user={u} size={24} />
                 <span>{u.name}</span>
               </a>
@@ -103,11 +116,13 @@ export default function App() {
 
         {user ? (
           <div className="account-card">
-            <Avatar user={user} size={34} />
-            <div className="grow">
-              <strong className="ellipsis">{user.name}</strong>
-              <span className="muted small ellipsis">@{user.handle}</span>
-            </div>
+            <a href={`#/u/${user.handle}`} className="account-link" title="Your profile and Watchcase">
+              <Avatar user={user} size={34} />
+              <div className="grow">
+                <strong className="ellipsis">{user.name}</strong>
+                <span className="muted small ellipsis">@{user.handle}</span>
+              </div>
+            </a>
             <button className="btn btn-quiet btn-icon" onClick={logout} aria-label="Sign out" title="Sign out">
               <Icon name="logout" size={17} />
             </button>
@@ -149,10 +164,10 @@ export default function App() {
             </button>
             {menu && (
               <div className="popover popover-right" role="menu">
-                <div className="popover-user">
+                <a className="popover-user" href={`#/u/${user.handle}`} onClick={() => setMenu(false)}>
                   <strong>{user.name}</strong>
-                  <span className="muted small">@{user.handle}</span>
-                </div>
+                  <span className="muted small">@{user.handle} · your Watchcase</span>
+                </a>
                 <button
                   className="popover-item"
                   role="menuitem"
@@ -175,6 +190,21 @@ export default function App() {
 
       <main className="content">
         <div className="page" key={`${page}/${param || ''}`}>
+          {user && emailOn && user.email && !user.emailVerified && page !== 'verify' && (
+            <Notice>
+              Confirm your email address ({user.email}) so you can reset your password later. We sent you a link.{' '}
+              <button
+                className="link"
+                onClick={() =>
+                  api('/auth/resend', { method: 'POST' })
+                    .then(() => notify('Confirmation email sent'))
+                    .catch((e) => notify(e.message))
+                }
+              >
+                Send it again
+              </button>
+            </Notice>
+          )}
           {view}
         </div>
       </main>

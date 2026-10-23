@@ -89,6 +89,7 @@ export default function Library() {
                   {t.status === 'watched' ? (
                     t.rating ? <Stars value={t.rating} size={14} /> : <span className="muted small">Not rated</span>
                   ) : null}
+                  {t.status === 'watched' && t.timesWatched > 1 && <span className="muted small">Watched {t.timesWatched}×</span>}
                   <span className="muted small">{timeAgo(t.addedAt)}</span>
                 </div>
                 <Icon name="chevronRight" size={18} className="entry-chevron" />

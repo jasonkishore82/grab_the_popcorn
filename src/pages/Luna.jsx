@@ -19,7 +19,7 @@ const greeting = () => {
 };
 
 export default function Luna({ titleId }) {
-  const { luna, setLuna, library, friends, user, openAuth } = useStore();
+  const { luna, setLuna, library, social, user, openAuth } = useStore();
   const about = titleId && getTitle(titleId);
   const [text, setText] = useState(about ? `Is ${about.title} worth watching for me?` : '');
   const [busy, setBusy] = useState(false);
@@ -45,7 +45,7 @@ export default function Luna({ titleId }) {
       context: {
         // Names travel with each entry so Luna also knows titles that came from OMDb.
         library: Object.fromEntries(Object.entries(library).map(([id, v]) => [id, { ...v, title: getTitle(id)?.title, year: getTitle(id)?.year }])),
-        friends,
+        friends: social.friends.map((f) => ({ name: f.name, handle: f.handle })),
       },
       signal: abort.current.signal,
       onText: (chunk) =>

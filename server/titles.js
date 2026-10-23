@@ -312,7 +312,7 @@ export async function getTitleFull(rawId, viewer) {
 
 // ---------- a user's own entries ----------
 
-const entryJson = (e) => ({ status: e.status, rating: e.rating ?? 0, review: e.review ?? '', addedAt: e.added_at, updatedAt: e.updated_at });
+const entryJson = (e) => ({ status: e.status, rating: e.rating ?? 0, review: e.review ?? '', timesWatched: e.status === 'watched' ? e.times_watched ?? 1 : 0, addedAt: e.added_at, updatedAt: e.updated_at });
 
 export function entryFor(userId, titleId) {
   const e = db.prepare('SELECT * FROM library_entries WHERE user_id = ? AND title_id = ?').get(userId, titleId);
@@ -340,12 +340,21 @@ export function putEntry(userId, rawTitleId, patch) {
   }
   if (rating !== null && status === 'watchlist') status = 'watched'; // rating something means you have seen it
 
+  // How many times they have watched it (only for watched titles).
+  let times = patch.timesWatched === undefined ? (cur?.status === 'watched' ? cur.times_watched : 1) : patch.timesWatched;
+  if (!Number.isInteger(times) || times < 1 || times > 999) {
+    if (patch.timesWatched !== undefined) throw new HttpError(400, 'Times watched must be 1 to 999');
+    times = 1;
+  }
+  if (status !== 'watched') times = 1;
+
   const t = now();
   db.prepare(
-    `INSERT INTO library_entries (user_id, title_id, status, rating, review, added_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)
-     ON CONFLICT(user_id, title_id) DO UPDATE SET status = excluded.status, rating = excluded.rating, review = excluded.review, updated_at = excluded.updated_at`,
-  ).run(userId, titleId, status, rating, review, cur?.added_at ?? t, t);
-  return { entry: entryJson({ status, rating, review, added_at: cur?.added_at ?? t, updated_at: t }), title: toJson(rowById(titleId)) };
+    `INSERT INTO library_entries (user_id, title_id, status, rating, review, times_watched, added_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(user_id, title_id) DO UPDATE SET status = excluded.status, rating = excluded.rating, review = excluded.review,
+       times_watched = excluded.times_watched, updated_at = excluded.updated_at`,
+  ).run(userId, titleId, status, rating, review, times, cur?.added_at ?? t, t);
+  return { entry: entryJson({ status, rating, review, times_watched: times, added_at: cur?.added_at ?? t, updated_at: t }), title: toJson(rowById(titleId)) };
 }
 
 export function deleteEntry(userId, rawTitleId) {
@@ -355,13 +364,17 @@ export function deleteEntry(userId, rawTitleId) {
   return { title: row ? toJson(row) : null };
 }
 
-export function libraryFor(userId) {
+export function libraryFor(userId, status = null) {
   const rows = db
-    .prepare(`${SELECT} JOIN library_entries e ON e.title_id = t.id AND e.user_id = ? ORDER BY e.updated_at DESC`.replace('SELECT t.*,', 'SELECT t.*, e.status AS e_status, e.rating AS e_rating, e.review AS e_review, e.added_at AS e_added, e.updated_at AS e_updated,'))
-    .all(userId);
+    .prepare(
+      `${SELECT.replace('SELECT t.*,', 'SELECT t.*, e.status AS e_status, e.rating AS e_rating, e.review AS e_review, e.times_watched AS e_times, e.added_at AS e_added, e.updated_at AS e_updated,')}
+       JOIN library_entries e ON e.title_id = t.id AND e.user_id = ? ${status ? 'AND e.status = ?' : ''}
+       ORDER BY e.updated_at DESC LIMIT 500`,
+    )
+    .all(userId, ...(status ? [status] : []));
   return rows.map((r) => ({
     title: toJson(r),
-    entry: entryJson({ status: r.e_status, rating: r.e_rating, review: r.e_review, added_at: r.e_added, updated_at: r.e_updated }),
+    entry: entryJson({ status: r.e_status, rating: r.e_rating, review: r.e_review, times_watched: r.e_times, added_at: r.e_added, updated_at: r.e_updated }),
   }));
 }
 

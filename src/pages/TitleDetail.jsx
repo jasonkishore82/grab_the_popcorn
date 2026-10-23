@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { allTitles, canonicalId, getTitle, getUser, kindLabel, timeAgo } from '../data';
+import { allTitles, canonicalId, getTitle, kindLabel, timeAgo } from '../data';
 import { useStore } from '../store';
 import { go } from '../router';
 import Poster from '../components/Poster';
@@ -41,7 +41,7 @@ function Community({ title, reviews, total, me }) {
               <Avatar user={r.user} size={36} />
               <div className="review-body">
                 <div className="review-head">
-                  <strong>{r.user.name}</strong>
+                  <a href={`#/u/${r.user.handle}`}><strong>{r.user.name}</strong></a>
                   <span className="muted small">@{r.user.handle}</span>
                   {me?.handle === r.user.handle && <span className="tag tag-sm">You</span>}
                   <span className="muted small review-time">{timeAgo(r.updatedAt)}</span>
@@ -59,7 +59,7 @@ function Community({ title, reviews, total, me }) {
 }
 
 export default function TitleDetail({ id }) {
-  const { user, library, saveTitle, removeTitle, openAuth, friends, sendMessage, notify, loadTitle, saved } = useStore();
+  const { user, library, saveTitle, removeTitle, openAuth, social, sendChat, notify, loadTitle, saved } = useStore();
   const wanted = canonicalId(id);
   const title = getTitle(wanted);
   const [data, setData] = useState(null); // { reviews, reviewTotal, degraded } from the server
@@ -108,7 +108,6 @@ export default function TitleDetail({ id }) {
 
   const entry = library[title.id];
   const watched = entry?.status === 'watched';
-  const fans = friends.map(getUser).filter((u) => u.favs.includes(title.id));
   const isShow = title.type === 'show';
   const similar = allTitles()
     .filter((t) => t.id !== title.id)
@@ -134,9 +133,13 @@ export default function TitleDetail({ id }) {
     if (saveTitle(title.id, { status })) notify(status === 'watched' ? `Marked “${title.title}” as watched` : `Added “${title.title}” to your watchlist`);
   };
 
-  const discuss = (friendId) => {
-    sendMessage(friendId, `What did you think of ${title.title}?`, title.id);
-    go(`/chat/${friendId}`);
+  const discuss = async (handle) => {
+    try {
+      await sendChat(handle, `What did you think of ${title.title}?`, title.id);
+      go(`/chat/${handle}`);
+    } catch (e) {
+      notify(e.message || 'Could not send that');
+    }
   };
 
   const needAccount = () => !user && openAuth('Sign in to rate this and write a review. Everyone can see it.');
@@ -206,9 +209,9 @@ export default function TitleDetail({ id }) {
               {sharing && (
                 <div className="popover" role="menu">
                   <span className="popover-label">Start a conversation with</span>
-                  {friends.length ? (
-                    friends.map(getUser).map((u) => (
-                      <button key={u.id} role="menuitem" className="popover-item" onClick={() => discuss(u.id)}>
+                  {social.friends.length ? (
+                    social.friends.map((u) => (
+                      <button key={u.handle} role="menuitem" className="popover-item" onClick={() => discuss(u.handle)}>
                         <Avatar user={u} size={26} />
                         <span>{u.name}</span>
                       </button>
@@ -239,16 +242,15 @@ export default function TitleDetail({ id }) {
             )}
           </div>
 
-          {fans.length > 0 && (
-            <div className="fans">
-              <div className="avatar-stack">
-                {fans.map((u) => (
-                  <Avatar key={u.id} user={u} size={28} />
-                ))}
+          {entry?.status === 'watched' && (
+            <div className="watch-count">
+              <span>You have watched this</span>
+              <div className="stepper">
+                <button aria-label="Fewer times" disabled={entry.timesWatched <= 1} onClick={() => saveTitle(title.id, { timesWatched: entry.timesWatched - 1 })}>−</button>
+                <strong>{entry.timesWatched}</strong>
+                <button aria-label="One more time" disabled={entry.timesWatched >= 999} onClick={() => saveTitle(title.id, { timesWatched: entry.timesWatched + 1 })}>+</button>
               </div>
-              <span>
-                <Icon name="heart" size={13} fill strokeWidth={0} /> A favourite of {fans.map((u) => u.name.split(' ')[0]).join(' and ')}
-              </span>
+              <span>{entry.timesWatched === 1 ? 'time' : 'times'}</span>
             </div>
           )}
         </div>

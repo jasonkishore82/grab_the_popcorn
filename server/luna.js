@@ -1,6 +1,6 @@
 // Luna: the in-app movie assistant. Runs on the server so the API key never reaches the browser.
 import Anthropic from '@anthropic-ai/sdk';
-import { TITLES, USERS } from '../src/data.js';
+import { TITLES } from '../src/data.js';
 
 const MODEL = 'claude-opus-5-5';
 const MAX_HISTORY = 30;
@@ -38,10 +38,10 @@ function userContext({ library = {}, friends = [] } = {}) {
       return `- ${t.title}: ${v.status === 'watched' ? 'watched' : 'on watchlist'}${rating}${review}`;
     })
     .filter(Boolean);
-  const pals = friends
-    .map((id) => USERS.find((u) => u.id === id))
-    .filter(Boolean)
-    .map((u) => `- ${u.name} (@${u.handle}): ${u.bio} Favourites: ${u.favs.map((f) => TITLES.find((t) => t.id === f)?.title).join(', ')}`);
+  const pals = (Array.isArray(friends) ? friends : [])
+    .slice(0, 20)
+    .filter((f) => f && typeof f.name === 'string')
+    .map((f) => `- ${f.name.slice(0, 40)}`);
   return `The user's list:\n${lines.join('\n') || '- (empty)'}\n\nThe user's friends:\n${pals.join('\n') || '- (none yet)'}`;
 }
 
