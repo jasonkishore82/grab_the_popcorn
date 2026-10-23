@@ -1,7 +1,7 @@
 // All API routes (mounted at /api). One shared database serves every user.
 import { HttpError, clientIp, json, limiter, readJson, sameOrigin } from './http.js';
 import { currentUser, forgotPassword, login, logout, register, requireUser, resendVerification, resetPassword, verifyEmailToken } from './auth.js';
-import { addFriend, conversations, listFriends, messagesWith, profile, removeFriend, searchPeople, sendMessage, updateProfile } from './social.js';
+import { addFriend, addToDome, avatarFor, conversations, domeOf, listFriends, messagesWith, profile, removeFriend, removeFromDome, searchPeople, sendMessage, updateProfile } from './social.js';
 import { emailConfigured } from './email.js';
 import { catalog, deleteEntry, getTitleFull, idAliases, libraryFor, pruneOldSearches, putEntry, search, seedStarterTitles, warmStarterTitles } from './titles.js';
 import { omdbConfigured } from './omdb.js';
@@ -72,6 +72,20 @@ export async function handleApi(req, res) {
     if (path === '/users' && method === 'GET') {
       if (!peopleLimit(clientIp(req))) throw new HttpError(429, 'Slow down a little');
       return json(res, 200, { people: searchPeople(currentUser(req), q.get('q')) });
+    }
+    if ((m = path.match(/^\/users\/([A-Za-z0-9_]{3,20})\/avatar$/)) && method === 'GET') {
+      const a = avatarFor(m[1]);
+      const headers = { 'Content-Type': a.type, 'Cache-Control': 'public, max-age=0, must-revalidate', ETag: a.tag };
+      if (req.headers['if-none-match'] === a.tag) { res.writeHead(304, headers); return res.end(); }
+      res.writeHead(200, { ...headers, 'Content-Length': a.bytes.length, 'X-Content-Type-Options': 'nosniff' });
+      return res.end(a.bytes);
+    }
+    if ((m = path.match(/^\/users\/([A-Za-z0-9_]{3,20})\/dome$/)) && method === 'GET') return json(res, 200, domeOf(m[1]));
+    if (path === '/dome' && method === 'GET') return json(res, 200, domeOf(requireUser(req).handle));
+    if ((m = path.match(/^\/dome\/([A-Za-z0-9_]{3,20})$/))) {
+      const user = requireUser(req);
+      if (method === 'PUT') return json(res, 200, addToDome(user.id, m[1]));
+      if (method === 'DELETE') return json(res, 200, removeFromDome(user.id, m[1]));
     }
     if ((m = path.match(/^\/users\/([A-Za-z0-9_]{3,20})$/)) && method === 'GET') return json(res, 200, profile(currentUser(req), m[1]));
     if (path === '/me/profile' && method === 'PUT') return json(res, 200, updateProfile(requireUser(req).id, await readJson(req, 300_000)));

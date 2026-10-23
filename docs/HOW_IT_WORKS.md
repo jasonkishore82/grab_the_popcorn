@@ -113,6 +113,7 @@ sequenceDiagram
 | `library_entries` | **everyone's** watchlist / watched status, star rating and comment: one row per member per title |
 | `id_aliases` | old id to new id for starter titles whose IMDb id was corrected |
 | `friendships` | one row per pair: who asked, and whether it was accepted |
+| `dome_members` | the friends a person chose to show in their Friends Dome (friends only, at most 40) |
 | `messages` | chat between friends (text, optional attached title, read time) |
 | `email_tokens` | single-use confirmation and password-reset links (only a hash is stored) |
 
@@ -323,6 +324,9 @@ All routes are under `/api`. Reading is open to everyone; routes marked **accoun
 | `GET /users/:handle` | anyone | A showcase: profile, stats and everything watched |
 | `PUT /me/profile` | account | Save my bio and photo |
 | `GET /friends` · `POST /friends/:handle` · `DELETE /friends/:handle` | account | List, request or accept, and remove or decline friends |
+| `GET /dome` · `PUT /dome/:handle` · `DELETE /dome/:handle` | account | Read your Friends Dome, add a friend to it, take one out. Adding a non-friend is refused, and unfriending removes the person from both domes |
+| `GET /users/:handle/dome` | public | Someone's Friends Dome: name, handle and a picture URL for each member |
+| `GET /users/:handle/avatar` | public | A profile picture as a cacheable image (ETag), so dome responses stay small |
 | `GET /chats` · `GET /chats/:handle?after=` · `POST /chats/:handle` | account | Conversations with unread counts, messages, and sending |
 | `PUT /titles/:imdbId/entry` | account | Save my `{status, rating, review, timesWatched}` for a title |
 | `DELETE /titles/:imdbId/entry` | account | Remove it from my list |

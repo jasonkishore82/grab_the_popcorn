@@ -126,6 +126,15 @@ CREATE TABLE IF NOT EXISTS friendships (
 );
 CREATE INDEX IF NOT EXISTS friendships_by_friend ON friendships (friend_id);
 
+-- A person's Friends Dome: the friends they chose to show, in the order they were added.
+CREATE TABLE IF NOT EXISTS dome_members (
+  owner_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  member_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  added_at  INTEGER NOT NULL,
+  PRIMARY KEY (owner_id, member_id),
+  CHECK (owner_id <> member_id)
+);
+
 -- Chat between friends.
 CREATE TABLE IF NOT EXISTS messages (
   id           INTEGER PRIMARY KEY AUTOINCREMENT,

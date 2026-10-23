@@ -1,4 +1,5 @@
 // People: search, profiles with their Watchcase, friend requests, and chat between friends.
+import { createHash } from 'node:crypto';
 import { db, now } from './db.js';
 import { HttpError } from './http.js';
 import { libraryFor, resolveId, toJson } from './titles.js';
@@ -47,6 +48,8 @@ export function addFriend(meId, handle) {
 export function removeFriend(meId, handle) {
   const other = userByHandle(handle);
   db.prepare('DELETE FROM friendships WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)').run(meId, other.id, other.id, meId);
+  // Only friends can be in a dome, so ending the friendship takes each of you out of the other's.
+  db.prepare('DELETE FROM dome_members WHERE (owner_id = ? AND member_id = ?) OR (owner_id = ? AND member_id = ?)').run(meId, other.id, other.id, meId);
   return { relation: 'none' };
 }
 
@@ -165,4 +168,54 @@ export function updateProfile(meId, { bio, avatar }) {
     db.prepare('UPDATE users SET avatar = ? WHERE id = ?').run(avatar, meId);
   }
   return { ok: true };
+}
+
+// ---------- Friends Dome ----------
+
+export const DOME_LIMIT = 40;
+
+const avatarTag = (avatar) => createHash('sha1').update(avatar).digest('hex').slice(0, 10);
+
+// Pictures are served as their own cacheable images, so a dome response stays small.
+export function avatarFor(handle) {
+  const u = userByHandle(handle);
+  const m = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(u.avatar ?? '');
+  if (!m) throw new HttpError(404, 'No picture');
+  return { type: m[1], bytes: Buffer.from(m[2], 'base64'), tag: `"${avatarTag(u.avatar)}"` };
+}
+
+const domePerson = (u) => ({
+  ...person(u),
+  avatarUrl: u.avatar ? `/api/users/${u.handle}/avatar?v=${avatarTag(u.avatar)}` : null,
+});
+
+// Anyone can see a dome, like a profile. Members who stopped being friends are never listed.
+export function domeOf(handle) {
+  const owner = userByHandle(handle);
+  const rows = db
+    .prepare(
+      `SELECT u.handle, u.name, u.avatar FROM dome_members d
+       JOIN users u ON u.id = d.member_id
+       WHERE d.owner_id = ? ORDER BY d.added_at, u.handle`,
+    )
+    .all(owner.id);
+  return { owner: person(owner), limit: DOME_LIMIT, members: rows.map(domePerson) };
+}
+
+export function addToDome(meId, handle) {
+  const other = userByHandle(handle);
+  if (!areFriends(meId, other.id)) throw new HttpError(403, 'You can only add friends to your dome');
+  const has = db.prepare('SELECT 1 FROM dome_members WHERE owner_id = ? AND member_id = ?').get(meId, other.id);
+  if (!has) {
+    const n = Number(db.prepare('SELECT COUNT(*) n FROM dome_members WHERE owner_id = ?').get(meId).n);
+    if (n >= DOME_LIMIT) throw new HttpError(409, `Your dome is full (${DOME_LIMIT} friends)`);
+    db.prepare('INSERT INTO dome_members (owner_id, member_id, added_at) VALUES (?, ?, ?)').run(meId, other.id, now());
+  }
+  return domeOf(db.prepare('SELECT handle FROM users WHERE id = ?').get(meId).handle);
+}
+
+export function removeFromDome(meId, handle) {
+  const other = userByHandle(handle);
+  db.prepare('DELETE FROM dome_members WHERE owner_id = ? AND member_id = ?').run(meId, other.id);
+  return domeOf(db.prepare('SELECT handle FROM users WHERE id = ?').get(meId).handle);
 }
