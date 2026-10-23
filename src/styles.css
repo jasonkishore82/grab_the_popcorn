@@ -400,7 +400,7 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   background: var(--glass-panel); border: 1px solid var(--line); backdrop-filter: blur(6px);
 }
 .score-block strong { display: block; font: 500 22px/1 var(--mono); letter-spacing: -0.02em; }
-.score-block span { font-size: 12px; color: var(--muted); }
+.score-block > div span { font-size: 12px; color: var(--muted); }
 .fans { display: flex; align-items: center; gap: 12px; color: var(--text-2); font-size: 13.5px; }
 .fans svg { color: var(--tomato); vertical-align: -2px; }
 .avatar-stack { display: flex; }
@@ -656,7 +656,9 @@ textarea::placeholder { color: var(--muted); }
   .section-head h2 { font-size: 26px; }
 
   .detail-backdrop { inset: -20px -16px auto; }
-  .detail-grid { grid-template-columns: 1fr; gap: 24px; }
+  .detail-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .detail-info { min-width: 0; }
+  .score-block { padding: 10px 14px 10px 12px; }
   .detail-grid > .poster { position: static; width: 58%; max-width: 240px; }
   .detail .display { font-size: 42px; }
   .detail .btn-row .btn:not(.btn-icon) { flex: 1 1 calc(50% - 10px); }
@@ -782,3 +784,26 @@ body { transition: background-color 0.25s, color 0.25s; }
 :root[data-theme='light'] .hero { background: #ffffff; }
 :root[data-theme='light'] .luna { background: radial-gradient(70% 40% at 50% 0%, rgba(74, 92, 166, 0.05), transparent 70%), #ffffff; }
 :root[data-theme='light'] .thread-empty, :root[data-theme='light'] .messages, :root[data-theme='light'] .composer { background: #ffffff; }
+
+/* ---------- OMDb data: real posters, score marks, credits ---------- */
+.poster-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; opacity: 0; transition: opacity 0.35s; }
+.poster.has-img .poster-img { opacity: 1; }
+.poster.has-img::after { display: none; }
+.mark { display: inline-grid; place-items: center; font-family: var(--sans); font-weight: 800; line-height: 1; border-radius: 4px; flex-shrink: 0; letter-spacing: -0.02em; }
+.mark-imdb { background: #f5c518; color: #000; padding: 0.24em 0.42em; }
+.mark-meta { width: 1.9em; height: 1.9em; color: #fff; }
+.mark-meta.good { background: #3fa34d; }
+.mark-meta.mixed { background: #f4b400; color: #000; }
+.mark-meta.bad { background: #e5483b; }
+.tag-sm { height: 22px; padding: 0 8px; font-size: 11.5px; }
+.credits { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px 32px; max-width: 760px; padding: 18px 0 4px; border-top: 1px solid var(--line); }
+.credits div { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.credits dt { font: 500 10.5px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.credits dd { margin: 0; color: var(--text-2); font-size: 14px; line-height: 1.45; }
+.notice { display: flex; align-items: flex-start; gap: 10px; margin-top: 18px; padding: 12px 14px; border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--line-2); color: var(--text-2); font-size: 13.5px; line-height: 1.5; }
+.notice svg { color: var(--accent-text); margin-top: 2px; flex-shrink: 0; }
+.shimmer { display: flex; flex-direction: column; gap: 10px; max-width: 60ch; }
+.shimmer i { height: 14px; border-radius: 7px; background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2)); background-size: 200% 100%; animation: shimmer 1.3s linear infinite; }
+.shimmer i:nth-child(2) { width: 92%; }
+.shimmer i:nth-child(3) { width: 64%; }
+@keyframes shimmer { to { background-position: -200% 0; } }

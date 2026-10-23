@@ -52,3 +52,12 @@ export function Empty({ icon, title, text, action }) {
     </div>
   );
 }
+
+export function Notice({ children }) {
+  return (
+    <div className="notice" role="status">
+      <Icon name="alert" size={16} />
+      <div>{children}</div>
+    </div>
+  );
+}

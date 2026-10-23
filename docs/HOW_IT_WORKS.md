@@ -59,7 +59,9 @@ Every action the user takes (rate, review, add to watchlist, mark watched, add a
 |---|---|---|
 | Pages | `src/pages/*.jsx` | Explore, Title detail, My List, Friends, Messages, Luna |
 | App state | `src/store.jsx` | Holds the user's list, friends, chats and Luna chat, and saves them |
-| Sample data | `src/data.js` | 16 movies/shows and 5 sample people |
+| Sample data | `src/data.js` | 16 movies/shows (with IMDb ids) and 5 sample people |
+| OMDb (browser) | `src/omdb.js` | Asks our server for a title's details or a search, and converts OMDb's fields to the app's shape |
+| OMDb (server) | `server/omdb.js` | Adds the `OMDB_API_KEY` from `.env`, passes only known parameters to OMDb, and caches answers for 24 hours |
 | Router | `src/router.js` | Hash-based routes like `#/title/m1` |
 | Luna (browser) | `src/luna.js` | Sends the chat to the server and streams the reply back |
 | Luna (server) | `server/luna.js` | Calls Claude with the catalog and the user's list; keeps the API key server-side |
@@ -497,7 +499,7 @@ When a user signs in for the first time, the app checks localStorage for `popcor
 | Phase | What | Result |
 |---|---|---|
 | 1 | Accounts + database + `library_entries` API; swap `store.jsx` from localStorage to the API | Lists, ratings and reviews saved for real across devices |
-| 2 | Real catalog from a movie API (TMDB) into `titles` / `genres` | Real posters, thousands of titles |
+| 2 | Move the OMDb data (already used for details and search) into `titles` / `genres`; add TMDB if more is needed | Real posters and thousands of titles, stored once on the server |
 | 3 | Content + friend + quality scoring, "For you" row on Explore, reasons | First version of recommendations |
 | 4 | Real friends, live chat (WebSocket), comments on reviews | The social side becomes real |
 | 5 | Collaborative filtering once there are enough users; nightly job; "Not interested" | Smarter "people like you" suggestions |

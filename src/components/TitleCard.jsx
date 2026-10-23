@@ -1,16 +1,18 @@
 import Poster from './Poster';
 import Scores from './Scores';
 import Icon from './Icon';
+import { kindLabel } from '../data';
 import { go } from '../router';
 import { useStore } from '../store';
 
 export default function TitleCard({ title, index = 0 }) {
-  const { library, saveTitle, notify } = useStore();
+  const { library, saveTitle, adoptTitle, notify } = useStore();
   const saved = library[title.id];
   const open = () => go(`/title/${title.id}`);
 
   const quickAdd = (e) => {
     e.stopPropagation();
+    adoptTitle(title); // titles from OMDb search must be remembered before they can be saved
     saveTitle(title.id, { status: 'watchlist' });
     notify(`Added “${title.title}” to your watchlist`);
   };
@@ -40,9 +42,9 @@ export default function TitleCard({ title, index = 0 }) {
       <div className="card-meta">
         <h3>{title.title}</h3>
         <div className="card-sub">
-          <span>{title.year}</span>
-          <i className="sep" />
-          <span>{title.genres[0]}</span>
+          {title.year && <span>{title.year}</span>}
+          {title.year && <i className="sep" />}
+          <span>{title.genres?.[0] || kindLabel(title)}</span>
         </div>
         <Scores title={title} />
       </div>

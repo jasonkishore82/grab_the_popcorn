@@ -1,10 +1,12 @@
-// Production server: serves the built app (dist/) and the Luna API.
-// Usage: npm run build && ANTHROPIC_API_KEY=... npm start
+// Production server: serves the built app (dist/) and the API routes (Luna, OMDb).
+// Usage: npm run build && npm start   (keys come from .env or the environment)
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import './env.js';
 import { handleLuna } from './luna.js';
+import { handleOmdb } from './omdb.js';
 
 const DIST = fileURLToPath(new URL('../dist', import.meta.url));
 const PORT = process.env.PORT || 3000;
@@ -13,6 +15,7 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
 createServer(async (req, res) => {
   const path = new URL(req.url, 'http://x').pathname;
   if (path === '/api/luna') return handleLuna(req, res);
+  if (path === '/api/omdb') return handleOmdb(req, res);
 
   const file = normalize(join(DIST, path === '/' ? 'index.html' : path));
   if (!file.startsWith(DIST)) {

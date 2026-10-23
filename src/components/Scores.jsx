@@ -1,3 +1,5 @@
+import { useDetails } from '../store';
+
 export function Tomato({ size = 14, fresh = true }) {
   return (
     <svg width={size} height={size} viewBox="0 0 16 16" aria-hidden="true">
@@ -19,36 +21,58 @@ export function Bucket({ size = 14 }) {
   );
 }
 
+const metaTone = (n) => (n >= 61 ? 'good' : n >= 40 ? 'mixed' : 'bad');
+
+// Which scores to show. With OMDb data: Rotten Tomatoes critics, IMDb and Metacritic.
+// Without it, the built-in sample scores.
+function scoreList(title, d) {
+  const out = [];
+  if (d) {
+    if (d.rt != null) out.push({ key: 'rt', icon: 'tomato', value: `${d.rt}%`, label: 'Critics', fresh: d.rt >= 60, tip: 'Rotten Tomatoes critics score' });
+    if (d.imdb != null) out.push({ key: 'imdb', icon: 'imdb', value: d.imdb.toFixed(1), label: d.imdbVotes ? `IMDb · ${d.imdbVotes} votes` : 'IMDb', tip: 'IMDb rating out of 10' });
+    if (d.meta != null) out.push({ key: 'meta', icon: 'meta', value: String(d.meta), label: 'Metascore', tone: metaTone(d.meta), tip: 'Metacritic score' });
+  }
+  if (!out.length) {
+    if (title.critics != null) out.push({ key: 'c', icon: 'tomato', value: `${title.critics}%`, label: 'Critics', fresh: title.critics >= 60, tip: 'Critics score' });
+    if (title.audience != null) out.push({ key: 'a', icon: 'bucket', value: `${title.audience}%`, label: 'Audience', tip: 'Audience score' });
+  }
+  return out;
+}
+
+function Mark({ s, size }) {
+  if (s.icon === 'tomato') return <Tomato size={size} fresh={s.fresh} />;
+  if (s.icon === 'bucket') return <Bucket size={size} />;
+  if (s.icon === 'imdb') return <span className="mark mark-imdb" style={{ fontSize: size * 0.68 }}>IMDb</span>;
+  return <span className={`mark mark-meta ${s.tone}`} style={{ fontSize: size * 0.58 }}>M</span>;
+}
+
 export default function Scores({ title, variant = 'inline' }) {
-  const fresh = title.critics >= 60;
+  const d = useDetails(title.id);
+  const scores = scoreList(title, d);
+  if (!scores.length) return null;
+
   if (variant === 'large') {
     return (
       <div className="scores-lg">
-        <div className="score-block">
-          <Tomato size={30} fresh={fresh} />
-          <div>
-            <strong>{title.critics}%</strong>
-            <span>Critics</span>
+        {scores.map((s) => (
+          <div key={s.key} className="score-block" title={s.tip}>
+            <Mark s={s} size={30} />
+            <div>
+              <strong>{s.value}</strong>
+              <span>{s.label}</span>
+            </div>
           </div>
-        </div>
-        <div className="score-block">
-          <Bucket size={30} />
-          <div>
-            <strong>{title.audience}%</strong>
-            <span>Audience</span>
-          </div>
-        </div>
+        ))}
       </div>
     );
   }
   return (
     <div className="scores">
-      <span className="score" title="Critics score">
-        <Tomato fresh={fresh} /> {title.critics}%
-      </span>
-      <span className="score" title="Audience score">
-        <Bucket /> {title.audience}%
-      </span>
+      {scores.slice(0, 2).map((s) => (
+        <span key={s.key} className="score" title={s.tip}>
+          <Mark s={s} size={14} /> {s.value}
+        </span>
+      ))}
     </div>
   );
 }

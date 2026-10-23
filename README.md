@@ -16,13 +16,25 @@ A minimal React UI for saving your favourite movies & shows, finding friends and
 ## Run it
 ```bash
 npm install
-export ANTHROPIC_API_KEY=sk-ant-...   # needed for Luna only
+cp .env.example .env     # then paste your keys into .env
 npm run dev
 ```
 
-For production: `npm run build && npm start` (serves the app and Luna's API on port 3000).
+For production: `npm run build && npm start` (serves the app and the API routes on port 3000).
 
-Luna's API lives in `server/luna.js`. The API key stays on the server and is never sent to the browser. Without a key, everything else works and Luna shows a setup message.
+## API keys (`.env`)
+| Variable | What it does | Get one |
+|---|---|---|
+| `OMDB_API_KEY` | Fills in posters, plot, director, cast, rating, awards and real Rotten Tomatoes / IMDb / Metacritic scores, and lets you search titles beyond the built-in catalogue | https://www.omdbapi.com/apikey.aspx (free: 1,000 requests a day; activate it from the email) |
+| `ANTHROPIC_API_KEY` | Powers Luna | https://console.anthropic.com/ |
+
+`.env` is git-ignored, so keys are never committed. If the variables are already set in your environment (for example as hosting secrets), those win over the file. Restart the server after changing `.env`.
+
+Both keys stay on the server (`server/omdb.js`, `server/luna.js`) and are never sent to the browser. Without a key everything else still works: the app falls back to its built-in sample data and shows a short notice on Explore.
+
+### How OMDb is used
+- On first load the app asks OMDb about each built-in title (a few at a time) and remembers the answers in the browser, so later visits make no requests. Answers are also cached on the server for 24 hours.
+- Typing 3 or more characters in the search box also searches OMDb. Results under "More from OMDb" open like any other title and can be saved, rated and discussed.
 
 ## Notes
 - Data is mock data in `src/data.js`; your list, friends and chats are saved in the browser (localStorage).

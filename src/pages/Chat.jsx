@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { getTitle, getUser, TITLES, timeAgo } from '../data';
+import { allTitles, getTitle, getUser, timeAgo } from '../data';
 import { useStore } from '../store';
 import { go } from '../router';
 import Avatar from '../components/Avatar';
@@ -75,7 +75,7 @@ function Thread({ friendId }) {
   };
 
   // Saved titles first in the picker.
-  const options = [...TITLES].sort((a, b) => !!library[b.id] - !!library[a.id]);
+  const options = allTitles().sort((a, b) => !!library[b.id] - !!library[a.id]);
   const attached = attach && getTitle(attach);
 
   return (

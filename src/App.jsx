@@ -1,7 +1,8 @@
+import { useEffect } from 'react';
 import { useRoute } from './router';
 import { useTheme } from './theme';
 import { useStore } from './store';
-import { getUser } from './data';
+import { TITLES, getUser } from './data';
 import Icon from './components/Icon';
 import Avatar from './components/Avatar';
 import Explore from './pages/Explore';
@@ -39,8 +40,13 @@ function Brand({ compact = false }) {
 
 export default function App() {
   const [page = '', param] = useRoute();
-  const { library, friends, toasts } = useStore();
+  const { library, friends, toasts, ensureMany } = useStore();
   const [theme, setTheme] = useTheme();
+
+  // Fill in posters, plots and ratings for the built-in catalogue (cached, so only the first visit costs requests).
+  useEffect(() => {
+    ensureMany(TITLES);
+  }, [ensureMany]);
   const listCount = Object.keys(library).length;
 
   let view;

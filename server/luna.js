@@ -31,7 +31,7 @@ ${catalog}`;
 function userContext({ library = {}, friends = [] } = {}) {
   const lines = Object.entries(library)
     .map(([id, v]) => {
-      const t = TITLES.find((x) => x.id === id);
+      const t = TITLES.find((x) => x.id === id) ?? (typeof v.title === 'string' ? { title: v.title.slice(0, 120) } : null);
       if (!t) return null;
       const rating = v.rating ? `, rated ${v.rating}/5` : '';
       const review = v.review ? `, review: "${String(v.review).slice(0, 200)}"` : '';

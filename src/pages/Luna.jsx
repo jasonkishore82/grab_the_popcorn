@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
-import { TITLES, getTitle } from '../data';
+import { allTitles, getTitle } from '../data';
 import { useStore } from '../store';
 import { askLuna, isError, splitError } from '../luna';
 import { go } from '../router';
@@ -41,7 +41,11 @@ export default function Luna({ titleId }) {
     abort.current = new AbortController();
     await askLuna({
       history,
-      context: { library, friends },
+      context: {
+        // Names travel with each entry so Luna also knows titles that came from OMDb.
+        library: Object.fromEntries(Object.entries(library).map(([id, v]) => [id, { ...v, title: getTitle(id)?.title, year: getTitle(id)?.year }])),
+        friends,
+      },
       signal: abort.current.signal,
       onText: (chunk) =>
         setLuna((msgs) => {
@@ -138,7 +142,7 @@ function LunaMessage({ msg, typing }) {
   const [body, error] = splitError(msg.content);
   const mentioned = typing
     ? []
-    : TITLES.filter((t) => body.includes(t.title)).sort((a, b) => body.indexOf(a.title) - body.indexOf(b.title));
+    : allTitles().filter((t) => body.includes(t.title)).sort((a, b) => body.indexOf(a.title) - body.indexOf(b.title));
   return (
     <div className={`lm lm-luna ${isError(msg.content) ? 'error' : ''}`}>
       <div className="moon" style={{ '--s': '28px' }} />
