@@ -224,9 +224,6 @@ export default function TitleDetail({ id }) {
                 </div>
               )}
             </div>
-            <button className="btn btn-luna" onClick={() => go(`/luna/${title.id}`)}>
-              <Icon name="moon" size={16} /> Ask Luna
-            </button>
             {entry && (
               <button
                 className="btn btn-quiet btn-icon"

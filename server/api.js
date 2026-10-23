@@ -4,7 +4,6 @@ import { currentUser, forgotPassword, login, logout, register, requireUser, rese
 import { addFriend, conversations, listFriends, messagesWith, profile, removeFriend, searchPeople, sendMessage, updateProfile } from './social.js';
 import { emailConfigured } from './email.js';
 import { catalog, deleteEntry, getTitleFull, idAliases, libraryFor, pruneOldSearches, putEntry, search, seedStarterTitles, warmStarterTitles } from './titles.js';
-import { handleLuna } from './luna.js';
 import { omdbConfigured } from './omdb.js';
 
 seedStarterTitles();
@@ -14,7 +13,6 @@ const omdbSearchLimit = limiter(30, 10 * 60 * 1000); // lookups that would spend
 const chatLimit = limiter(60, 60 * 1000); // messages per user per minute
 const peopleLimit = limiter(60, 60 * 1000);
 const resendLimit = limiter(3, 60 * 60 * 1000);
-const lunaLimit = limiter(30, 10 * 60 * 1000); // questions per user
 
 export const startBackgroundWork = () => {
   pruneOldSearches();
@@ -115,13 +113,6 @@ export async function handleApi(req, res) {
       if (method === 'DELETE') return json(res, 200, deleteEntry(user.id, m[1]));
     }
     if (path === '/me/library' && method === 'GET') return json(res, 200, { entries: libraryFor(requireUser(req).id) });
-
-    // --- Luna (signed-in users only, so strangers cannot spend the AI budget) ---
-    if (path === '/luna' && method === 'POST') {
-      const user = requireUser(req);
-      if (!lunaLimit(`u${user.id}`)) throw new HttpError(429, 'Luna needs a short break. Try again in a few minutes.');
-      return handleLuna(req, res);
-    }
 
     throw new HttpError(404, 'Not found');
   } catch (e) {

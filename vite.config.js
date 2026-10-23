@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import './server/env.js';
 import { handleApi, startBackgroundWork } from './server/api.js';
 
-// Serve the API (accounts, shared catalogue, reviews, Luna) from the Vite dev/preview server so `npm run dev` just works.
+// Serve the API (accounts, shared catalogue, reviews, chat) from the Vite dev/preview server so `npm run dev` just works.
 const api = {
   name: 'popcorn-api',
   configureServer(server) {

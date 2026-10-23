@@ -14,7 +14,6 @@ import Chat from './pages/Chat';
 import Showcase from './pages/Showcase';
 import { ResetPassword, VerifyEmail } from './pages/Account';
 import { Notice } from './components/ui';
-import Luna from './pages/Luna';
 
 const NAV = [
   { key: '', href: '/', label: 'Explore', icon: 'compass' },
@@ -22,7 +21,6 @@ const NAV = [
   { key: 'showcase', href: '/showcase', label: 'Showcase', icon: 'film' },
   { key: 'friends', href: '/friends', label: 'Friends', icon: 'users' },
   { key: 'chat', href: '/chat', label: 'Messages', icon: 'message' },
-  { key: 'luna', href: '/luna', label: 'Ask Luna', icon: 'moon' },
 ];
 
 function Brand() {
@@ -68,7 +66,6 @@ export default function App() {
   else if (page === 'u' || page === 'showcase') view = <Showcase key={param || user?.handle || ''} handle={param} />;
   else if (page === 'verify') view = <VerifyEmail token={param} />;
   else if (page === 'reset') view = <ResetPassword token={param} />;
-  else if (page === 'luna') view = <Luna key={param || ''} titleId={param} />;
   else view = <Explore />;
 
   return (
@@ -77,7 +74,7 @@ export default function App() {
         <Brand />
         <nav className="side-nav" aria-label="Main">
           {NAV.map((n) => (
-            <a key={n.key} href={`#${n.href}`} className={`${page === n.key ? 'active' : ''} ${n.key === 'luna' ? 'is-luna' : ''}`}>
+            <a key={n.key} href={`#${n.href}`} className={`${page === n.key ? 'active' : ''}`}>
               <Icon name={n.icon} size={18} />
               <span>{n.label}</span>
               {n.key === 'library' && listCount > 0 && <span className="nav-count">{listCount}</span>}
@@ -98,14 +95,6 @@ export default function App() {
             ))}
           </div>
         )}
-
-        <a href="#/luna" className="luna-card">
-          <div className="moon" style={{ '--s': '34px' }} />
-          <div>
-            <strong>Not sure what to watch?</strong>
-            <span>Ask Luna for a pick</span>
-          </div>
-        </a>
 
         {user ? (
           <div className="account-card">
@@ -206,7 +195,7 @@ export default function App() {
         {NAV.map((n) => (
           <a key={n.key} href={`#${n.href}`} className={page === n.key ? 'active' : ''}>
             <Icon name={n.icon} size={20} />
-            <span>{n.label === 'Ask Luna' ? 'Luna' : n.label}</span>
+            <span>{n.label}</span>
           </a>
         ))}
       </nav>

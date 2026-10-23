@@ -7,7 +7,7 @@ const LEGACY_KEY = 'popcorn-legacy-library';
 const NO_SOCIAL = { friends: [], incoming: [], outgoing: [] };
 const NO_CHAT = { conversations: [], unread: 0 };
 
-// Only the Luna conversation lives in this browser. Everything else is on the server.
+// Everything lives on the server. This only keeps aside a list saved by an earlier single-user version.
 function loadLocal() {
   try {
     const s = JSON.parse(localStorage.getItem(KEY)) || {};
@@ -15,9 +15,9 @@ function loadLocal() {
     if (s.library && Object.keys(s.library).length && !localStorage.getItem(LEGACY_KEY)) {
       localStorage.setItem(LEGACY_KEY, JSON.stringify(s.library));
     }
-    return { luna: s.luna ?? [] };
+    return {};
   } catch {
-    return { luna: [] };
+    return {};
   }
 }
 
@@ -288,9 +288,6 @@ export function StoreProvider({ children }) {
       const { message } = await api(`/chats/${handle}`, { method: 'POST', body: { text, titleId } });
       refreshSocial();
       return message;
-    },
-    setLuna(update) {
-      setLocal((s) => ({ ...s, luna: typeof update === 'function' ? update(s.luna) : update }));
     },
   };
 

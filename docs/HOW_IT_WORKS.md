@@ -8,9 +8,8 @@ This doc explains how the app works today (accounts and a shared database are bu
 - [4. The database](#4-the-database)
 - [5. The API](#5-the-api)
 - [6. The recommendation system](#6-the-recommendation-system)
-- [7. How Luna fits in](#7-how-luna-fits-in)
-- [8. Moving from today to the database](#8-moving-from-today-to-the-database)
-- [9. Build plan](#9-build-plan)
+- [7. Moving from the old single-user version](#7-moving-from-the-old-single-user-version)
+- [8. Build plan](#8-build-plan)
 
 > **Status.**
 > - **Built:** accounts, the shared database (SQLite), the shared title catalogue filled from OMDb, and everyone's watchlist, watched list, star ratings and comments. See section 3.
@@ -25,13 +24,11 @@ ClapBoxes is a place to keep track of movies and shows, rate and review them, ch
 
 ```mermaid
 flowchart LR
-    U([User]) --> UI[React app<br/>Explore · My List · Friends · Messages · Luna]
+    U([User]) --> UI[React app<br/>Explore · My List · Friends · Messages]
     UI -->|ratings, reviews,<br/>watchlist, watched| API[Node server]
     API --> DB[(Database)]
     DB --> REC[Recommendation engine]
     REC -->|For you list<br/>with reasons| API
-    API -->|top picks + reasons| LUNA[Luna<br/>Claude]
-    LUNA -->|friendly answer| UI
 ```
 
 Every action the user takes (rate, review, add to watchlist, mark watched, add a friend) is saved. The recommendation engine reads those saved actions and scores every title the user hasn't seen yet. Luna uses those scores to answer in plain language.
@@ -49,7 +46,6 @@ Every action the user takes (rate, review, add to watchlist, mark watched, add a
 | **Remove** | Title page → bin icon | Drops the entry. |
 | **Friends** | Friends page → "Add friend" | Friends' taste adds a "social" boost to titles they loved. |
 | **Chat messages** | Messages page | Stored for the conversation. Not used for recommendations. |
-| **Questions to Luna** | Luna page | Stored as the Luna conversation. |
 | **Searches and filters** | Explore page | Not stored today. Could be logged later as a light interest signal. |
 
 ---
@@ -89,14 +85,14 @@ sequenceDiagram
 - **Opening a title.** The first time anyone opens a title, the server fetches its full details (poster, plot, director, cast, awards, Rotten Tomatoes / IMDb / Metacritic scores) from OMDb and saves them. Everyone after that gets them from the database.
 - **Rating and commenting.** Each member has one row per title in `library_entries` (watchlist or watched, 1 to 5 stars, comment). Ratings and comments are public. The title page shows the members' average and every member's review.
 - **Starter titles.** 16 titles are built in so the app is never empty. They are saved in the same table, and their details are fetched from OMDb in the background once. If a starter's IMDb id turns out to be wrong, the server finds the right one by name and year and moves everything over (`id_aliases`).
-- **Reading is open to everyone; writing needs an account.** A visitor who is not signed in can browse and read all reviews. Rating, commenting, saving to a list and asking Luna need an account.
+- **Reading is open to everyone; writing needs an account.** A visitor who is not signed in can browse and read all reviews. Rating, commenting, saving to a list and chatting need an account.
 
 ### Pieces
 
 | Part | File(s) | Job |
 |---|---|---|
-| Pages | `src/pages/*.jsx` | Explore, Title detail, My List, Friends, Messages, Luna |
-| App state | `src/store.jsx` | Who is signed in, their list (from the server), and the sample friends, chats and Luna chat (in the browser) |
+| Pages | `src/pages/*.jsx` | Explore, Title detail, My List, Showcase, Friends, Messages |
+| App state | `src/store.jsx` | Who is signed in, their list (from the server), friends and chat |
 | Starter data | `src/data.js` | 16 starter titles (IMDb ids), 5 sample people, and the in-browser registry of titles |
 | API helper | `src/api.js` | `fetch` wrapper for our server |
 | Database | `server/db.js` | The SQLite file and its tables |
@@ -104,7 +100,6 @@ sequenceDiagram
 | Catalogue and reviews | `server/titles.js` | Titles, search caching, OMDb lookups, ratings, comments, lists |
 | OMDb | `server/omdb.js` | The only place that talks to OMDb; the key stays here |
 | API routes | `server/api.js` | All `/api/*` routes, rate limits, cross-site protection |
-| Luna | `src/luna.js`, `server/luna.js` | Streams answers from Claude; sign-in required |
 | Servers | `server/index.js`, `vite.config.js` | `npm start` (production) and `npm run dev` |
 
 ### The tables that exist today (SQLite, file `data/popcorn.db`)
@@ -125,7 +120,7 @@ sequenceDiagram
 
 ### Where the rest of the data lives
 
-Only the Luna conversation is still saved in the browser's localStorage (key `popcorn-state-v1`). Everything else, including friends and chat, is on the server.
+Everything is stored on the server. The browser only keeps aside a list saved by an older single-user version, until it is imported.
 
 ### People, friends, chat and the Watchcase
 
@@ -157,7 +152,6 @@ erDiagram
     USERS ||--o{ EVENTS : creates
     USERS ||--o{ RECOMMENDATIONS : gets
     TITLES ||--o{ RECOMMENDATIONS : "is suggested in"
-    USERS ||--o{ LUNA_MESSAGES : "chats with Luna"
 ```
 
 ### The key table: `library_entries`
@@ -263,15 +257,6 @@ CREATE TABLE messages (
 );
 CREATE INDEX messages_by_conversation ON messages (conversation_id, sent_at);
 
--- Luna conversation history
-CREATE TABLE luna_messages (
-  id        BIGSERIAL PRIMARY KEY,
-  user_id   BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  role      TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
-  content   TEXT NOT NULL,
-  sent_at   TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
 -- Append-only log of everything the user does (history + training data)
 CREATE TABLE events (
   id         BIGSERIAL PRIMARY KEY,
@@ -342,7 +327,6 @@ All routes are under `/api`. Reading is open to everyone; routes marked **accoun
 | `PUT /titles/:imdbId/entry` | account | Save my `{status, rating, review, timesWatched}` for a title |
 | `DELETE /titles/:imdbId/entry` | account | Remove it from my list |
 | `GET /me/library` | account | My watchlist and watched titles |
-| `POST /luna` | account | Ask Luna (streams text) |
 
 Safeguards: passwords are hashed with scrypt; sessions are HttpOnly, SameSite cookies; writes from other websites are refused; sign-in attempts and OMDb-triggering searches are rate-limited; all database access uses prepared statements; the OMDb key never leaves the server.
 
@@ -377,7 +361,6 @@ flowchart TD
     QS --> B
     B --> X[Step 7: Remove watched,<br/>mix for variety]
     X --> R[Top picks + reasons]
-    R --> L[Luna explains them<br/>in plain language]
 ```
 
 ### Step 0: Turn every input into a number
@@ -391,7 +374,7 @@ Each library entry gets a **signal** between −2 and +2, centred on "neutral" (
 | Rated 3 stars | 0 | Neutral |
 | Rated 2 stars | −1 | Disliked it |
 | Rated 1 stars | −2 | Hated it |
-| Watched, no rating, has review | from review sentiment (−2…+2) | Claude reads the comment and scores it |
+| Watched, no rating, has review | from review sentiment (−2…+2) | a simple sentiment read of the comment |
 | Watched, no rating, no review | +0.5 | Finished it, so probably okay |
 | On watchlist | +0.5 | Interested, but hasn't seen it |
 
@@ -528,25 +511,13 @@ Results go in the `recommendations` table, so the "For you" page is a single qui
 
 ---
 
-## 7. How Luna fits in
-
-Today Luna gets the catalog plus the user's list and friends, and reasons about them directly. Once the recommender exists:
-
-1. The server fetches the user's **top 10 recommendations with reasons** from the database.
-2. It adds them to Luna's context: *"Ranked picks for this user: 1. Everything Everywhere All at Once (0.68) — likes Sci-Fi, Maya loved it…"*
-3. Luna answers the actual question ("something light for tonight", "a show to watch with Leo") by **choosing from and explaining** those picks, rather than ranking titles from scratch.
-
-This keeps suggestions consistent between the "For you" page and Luna, and keeps Luna's prompts short. Luna is also how a review's sentiment gets scored (step 0) when the user left a comment but no stars.
-
----
-
-## 8. Moving from the old single-user version
+## 7. Moving from the old single-user version
 
 Earlier versions kept a person's list only in their browser. The first time someone signs in (or creates an account) in a browser that has such a list, the app imports it once: each title is looked up in the shared catalogue, then saved as a `library_entries` row (status, rating, comment). Titles the account already has are not overwritten. After the import the browser's copy is removed.
 
 ---
 
-## 9. Build plan
+## 8. Build plan
 
 | Phase | What | Result |
 |---|---|---|
@@ -555,10 +526,8 @@ Earlier versions kept a person's list only in their browser. The first time some
 | 3 | Content + friend + quality scoring, "For you" row on Explore, reasons | First version of recommendations |
 | 4 | Real friends, live chat (WebSocket), comments on reviews | The social side becomes real |
 | 5 | Collaborative filtering once there are enough users; nightly job; "Not interested" | Smarter "people like you" suggestions |
-| 6 | Luna uses the recommender's picks (section 7) | Luna and "For you" agree |
 
 ### Privacy notes
 
 - Reviews and ratings are visible to friends by default; add a per-entry "private" option.
-- Luna only receives the signed-in user's own data, plus their friends' public favourites.
 - "Delete my account" removes every row tied to the user (the `ON DELETE CASCADE` rules handle this).

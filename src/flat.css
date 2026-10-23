@@ -44,13 +44,6 @@
   --star-off: #d1d1d6;
   --err-text: #ff3b30;
 
-  --luna: #af52de;
-  --luna-2: #af52de;
-  --luna-soft: rgba(175, 82, 222, 0.12);
-  --luna-line: rgba(175, 82, 222, 0.35);
-  --on-luna: #ffffff;
-  --luna-hover: #9a3dc9;
-
   --chrome: rgba(249, 249, 249, 0.86);
   --chrome-2: rgba(249, 249, 249, 0.92);
   --glass-panel: #f2f2f7;
@@ -95,13 +88,6 @@
   --star-off: #48484a;
   --err-text: #ff453a;
 
-  --luna: #bf5af2;
-  --luna-2: #bf5af2;
-  --luna-soft: rgba(191, 90, 242, 0.18);
-  --luna-line: rgba(191, 90, 242, 0.45);
-  --on-luna: #ffffff;
-  --luna-hover: #d17cf7;
-
   --chrome: rgba(28, 28, 30, 0.82);
   --chrome-2: rgba(28, 28, 30, 0.9);
   --glass-panel: #1c1c1e;
@@ -128,7 +114,7 @@ h1, h2, h3 { font-weight: 600; }
 .panel-head h2 { font-size: 20px; }
 .empty h3 { font-size: 20px; }
 .entry-main h3 { font-size: 17px; }
-.brand span, .modal h2, .luna-id h1, .showcase-name h1, .fatal h1, .post-body h2 { font-family: var(--sans); font-weight: 300; letter-spacing: -0.03em; }
+.brand span, .modal h2, .showcase-name h1, .fatal h1, .post-body h2 { font-family: var(--sans); font-weight: 300; letter-spacing: -0.03em; }
 .brand span { font-weight: 500; font-size: 18px; letter-spacing: -0.02em; }
 .rate-label { font-family: var(--sans); font-style: normal; font-weight: 400; font-size: 17px; }
 .stat strong, .score-block strong, .community-avg strong { font-family: var(--sans); font-weight: 300; letter-spacing: -0.03em; }
@@ -146,21 +132,17 @@ h1, h2, h3 { font-weight: 600; }
 /* ---------- Surfaces: flat, no shadows ---------- */
 .card:hover .card-poster, .card:focus-visible .card-poster { transform: none; }
 .card:active { opacity: 0.7; }
-.poster, .card:hover .poster, .hero-poster .poster, .panel, .person-card, .stat, .score-block, .chat-layout, .modal, .btn, .toast, .account-card, .luna-card, .notice, .empty, .stepper {
+.poster, .card:hover .poster, .hero-poster .poster, .panel, .person-card, .stat, .score-block, .chat-layout, .modal, .btn, .toast, .account-card, .notice, .empty, .stepper {
   box-shadow: none !important;
 }
 .sidebar { background: var(--surface-2) !important; border-right: 0; }
 :root[data-theme='dark'] .sidebar { background: #0b0b0c !important; border-right: 1px solid var(--line); }
-.panel, .person-card, .stat, .chat-layout, .score-block, .account-card, .luna-card, .notice, .stepper {
+.panel, .person-card, .stat, .chat-layout, .score-block, .account-card, .notice, .stepper {
   background: var(--surface-2); border: 0; border-radius: var(--r-lg);
 }
 :root[data-theme='light'] .panel, :root[data-theme='light'] .person-card, :root[data-theme='light'] .stat, :root[data-theme='light'] .chat-layout,
-:root[data-theme='light'] .score-block { box-shadow: none; }
-:root[data-theme='dark'] .sidebar .luna-card, :root[data-theme='dark'] .sidebar .account-card { background: var(--surface); }
-.sidebar .luna-card, .sidebar .account-card { background: var(--surface); }
+:root[data-theme='light'] .score-block { box-shadow: none; } :root[data-theme='dark'] .sidebar .account-card { background: var(--surface); } .sidebar .account-card { background: var(--surface); }
 :root[data-theme='dark'] .score-block { background: var(--surface); }
-.luna-card:hover { transform: none; border: 0; }
-.luna-card { background: var(--surface); }
 .score-block { backdrop-filter: none; }
 .empty { background: var(--surface-2); border: 0; border-radius: 18px; }
 :root[data-theme='light'] .empty { background: var(--surface-2); }
@@ -180,9 +162,6 @@ h1, h2, h3 { font-weight: 600; }
 .btn-quiet:hover { background: var(--accent-soft); color: var(--accent-text); }
 .btn-selected, :root[data-theme='light'] .btn-selected { background: var(--accent-soft); border: 0; color: var(--accent-text); }
 :root[data-theme='light'] .btn-selected:hover { background: var(--accent-soft); }
-.btn-luna { background: var(--luna-soft); border: 0; color: var(--luna); }
-.btn-luna:hover { background: color-mix(in srgb, var(--luna) 22%, transparent); }
-.btn-luna-solid { background: var(--luna); color: #fff; }
 .link { color: var(--accent-text); }
 .back { color: var(--accent-text); }
 
@@ -213,8 +192,7 @@ textarea:focus, .auth-form input:focus, .composer input:focus { border-color: va
 .side-nav a:hover { background: var(--surface-3); color: var(--text); }
 :root[data-theme='dark'] .side-nav a:hover { background: var(--surface); }
 .side-nav a.active, :root[data-theme='light'] .side-nav a.active { background: var(--accent-soft); box-shadow: none; color: var(--accent-text); }
-.side-nav a.active svg, .side-nav a.is-luna.active svg { color: var(--accent-text); }
-.side-nav a.is-luna svg { color: var(--luna); }
+.side-nav a.active svg{ color: var(--accent-text); }
 .nav-count, :root[data-theme='light'] .nav-count { background: var(--surface-3); color: var(--text-2); }
 .nav-count.unread { background: var(--tomato); color: #fff; }
 .side-friend:hover { background: var(--surface-3); }
@@ -287,28 +265,6 @@ textarea:focus, .auth-form input:focus, .composer input:focus { border-color: va
 .composer .btn-primary.btn-icon { background: var(--accent); }
 .attached { background: var(--surface-2); }
 
-/* ---------- Luna: flat purple ---------- */
-.moon { background: var(--luna); box-shadow: none !important; }
-:root[data-theme='light'] .moon { box-shadow: none !important; }
-.moon::before { background:
-  radial-gradient(circle at 62% 36%, rgba(0, 0, 0, 0.14) 0 9%, transparent 10%),
-  radial-gradient(circle at 40% 64%, rgba(0, 0, 0, 0.12) 0 12%, transparent 13%),
-  radial-gradient(circle at 70% 68%, rgba(0, 0, 0, 0.1) 0 6%, transparent 7%); }
-.luna-empty .moon { animation: none; }
-.luna, :root[data-theme='light'] .luna { background: var(--surface-2); border: 0; border-radius: 18px; }
-.suggestion, .lm-title { background: var(--surface); border: 0; }
-.suggestion:hover { transform: none; background: var(--surface-3); color: var(--text); }
-.suggestion svg { color: var(--luna); }
-.luna-input { background: var(--surface); border: 1px solid var(--line); }
-.luna-input:focus-within { box-shadow: none; border-color: var(--luna); }
-.lm-bubble { background: var(--accent); color: #fff; }
-.lm-body strong { color: inherit; }
-.lm-body li::marker { color: var(--luna); }
-.lm-error { background: rgba(255, 59, 48, 0.1); border: 0; }
-.luna-card strong { color: var(--text); }
-.luna-card span { color: var(--luna); }
-.lm-body code, .shimmer i { background: var(--surface-3); }
-.dots i { background: var(--luna); }
 
 /* ---------- ClapBoxes wordmark ---------- */
 .brand { padding: 0 10px; }

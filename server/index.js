@@ -1,4 +1,4 @@
-// Production server: serves the built app (dist/) and the API routes (Luna, OMDb).
+// Production server: serves the built app (dist/) and the API routes.
 // Usage: npm run build && npm start   (keys come from .env or the environment)
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
