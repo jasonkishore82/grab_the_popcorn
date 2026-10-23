@@ -47,16 +47,3 @@ export default function Icon({ name, size = 18, fill = false, strokeWidth = 1.75
     </svg>
   );
 }
-
-export function Logo({ size = 30 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-      <rect width="32" height="32" rx="9" fill="var(--accent)" />
-      <path d="M8.5 13.5h15l-1.7 12.1a1.6 1.6 0 0 1-1.6 1.4h-8.4a1.6 1.6 0 0 1-1.6-1.4z" fill="#1a1206" />
-      <path d="M13.3 14l.5 12.4M18.7 14l-.5 12.4" stroke="var(--accent)" strokeWidth="1.6" />
-      <circle cx="11.6" cy="11.6" r="2.8" fill="#fff4dc" />
-      <circle cx="16" cy="9.6" r="3.2" fill="#fff4dc" />
-      <circle cx="20.4" cy="11.6" r="2.8" fill="#fff4dc" />
-    </svg>
-  );
-}

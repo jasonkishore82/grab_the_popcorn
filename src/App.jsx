@@ -1,7 +1,7 @@
 import { useRoute } from './router';
 import { useStore } from './store';
 import { getUser } from './data';
-import Icon, { Logo } from './components/Icon';
+import Icon from './components/Icon';
 import Avatar from './components/Avatar';
 import Explore from './pages/Explore';
 import TitleDetail from './pages/TitleDetail';
@@ -18,10 +18,17 @@ const NAV = [
   { key: 'luna', href: '/luna', label: 'Ask Luna', icon: 'moon' },
 ];
 
-function Brand() {
+function Brand({ compact = false }) {
+  if (!compact) {
+    return (
+      <a href="#/" className="brand brand-full" aria-label="Grab the Popcorn home">
+        <img src="/logo.png" alt="Grab the Popcorn" width="530" height="640" />
+      </a>
+    );
+  }
   return (
     <a href="#/" className="brand" aria-label="Grab the Popcorn home">
-      <Logo />
+      <img src="/logo.png" alt="" width="530" height="640" />
       <span>
         Grab the <em>Popcorn</em>
       </span>
@@ -78,7 +85,7 @@ export default function App() {
       </aside>
 
       <header className="mobile-top">
-        <Brand />
+        <Brand compact />
       </header>
 
       <main className="content">
