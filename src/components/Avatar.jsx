@@ -1,6 +1,7 @@
 export default function Avatar({ user, size = 40 }) {
-  const hue = [...user.id].reduce((a, c) => a + c.charCodeAt(0) * 37, 0) % 360;
-  const initials = user.name.split(' ').map((p) => p[0]).join('');
+  const key = String(user.id ?? user.handle ?? user.name);
+  const hue = [...key].reduce((a, c) => a + c.charCodeAt(0) * 37, 0) % 360;
+  const initials = user.name.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join('');
   return (
     <div
       className="avatar"

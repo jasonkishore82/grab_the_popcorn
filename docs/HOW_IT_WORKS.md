@@ -1,6 +1,6 @@
 # How Grab the Popcorn Works
 
-This doc explains how the app works today, how it will store everything a user does in a database, and how the recommendation system picks what to suggest next.
+This doc explains how the app works today (accounts and a shared database are built), how the rest of the social side will follow, and how the recommendation system will pick what to suggest next.
 
 - [1. The big picture](#1-the-big-picture)
 - [2. What the user puts in](#2-what-the-user-puts-in)
@@ -12,7 +12,9 @@ This doc explains how the app works today, how it will store everything a user d
 - [8. Moving from today to the database](#8-moving-from-today-to-the-database)
 - [9. Build plan](#9-build-plan)
 
-> **Status.** Sections 1–3 describe what is built. Sections 4–9 are the design for what comes next: the database, the API and the recommendation system are not built yet.
+> **Status.**
+> - **Built:** accounts, the shared database (SQLite), the shared title catalogue filled from OMDb, and everyone's watchlist, watched list, star ratings and comments. See section 3.
+> - **Not built yet:** real friends and live chat (the people and replies in those screens are samples), the recommendation system, and moving from SQLite to PostgreSQL. Sections 4 and 6 to 9 are the design for these.
 
 ---
 
@@ -53,51 +55,77 @@ Every action the user takes (rate, review, add to watchlist, mark watched, add a
 
 ## 3. How it works today
 
+### The idea: one catalogue and one set of reviews, shared by everybody
+
+Every title that anyone searches for or opens is saved once in a table that all members share. Every rating and comment is saved in a second shared table. So what one person does is visible to the next person.
+
+```mermaid
+sequenceDiagram
+    participant A as Alice
+    participant S as Our server
+    participant DB as Shared database
+    participant O as OMDb
+    participant B as Bob
+    A->>S: search "Interstellar"
+    S->>DB: seen this search before?
+    DB-->>S: no
+    S->>O: ask OMDb (once)
+    O-->>S: matching titles
+    S->>DB: save titles and the search
+    S-->>A: results
+    A->>S: open it, rate 5 stars, comment
+    S->>DB: save rating and comment
+    B->>S: search "Interstellar"
+    S->>DB: seen this search before?
+    DB-->>S: yes, here are the titles
+    S-->>B: results (no OMDb call)
+    B->>S: open Interstellar
+    S->>DB: title + everyone's reviews
+    S-->>B: Alice's 5 stars and comment
+```
+
+- **Searching.** The server first checks whether this exact search was done before (`search_cache`). If so, it answers from the database and does not call OMDb. Otherwise it asks OMDb once and saves every title it returns. Searches also match titles already in the catalogue, so partial words work. OMDb is only asked for searches of 3 or more characters.
+- **Opening a title.** The first time anyone opens a title, the server fetches its full details (poster, plot, director, cast, awards, Rotten Tomatoes / IMDb / Metacritic scores) from OMDb and saves them. Everyone after that gets them from the database.
+- **Rating and commenting.** Each member has one row per title in `library_entries` (watchlist or watched, 1 to 5 stars, comment). Ratings and comments are public. The title page shows the members' average and every member's review.
+- **Starter titles.** 16 titles are built in so the app is never empty. They are saved in the same table, and their details are fetched from OMDb in the background once. If a starter's IMDb id turns out to be wrong, the server finds the right one by name and year and moves everything over (`id_aliases`).
+- **Reading is open to everyone; writing needs an account.** A visitor who is not signed in can browse and read all reviews. Rating, commenting, saving to a list and asking Luna need an account.
+
 ### Pieces
 
 | Part | File(s) | Job |
 |---|---|---|
 | Pages | `src/pages/*.jsx` | Explore, Title detail, My List, Friends, Messages, Luna |
-| App state | `src/store.jsx` | Holds the user's list, friends, chats and Luna chat, and saves them |
-| Sample data | `src/data.js` | 16 movies/shows (with IMDb ids) and 5 sample people |
-| OMDb (browser) | `src/omdb.js` | Asks our server for a title's details or a search, and converts OMDb's fields to the app's shape |
-| OMDb (server) | `server/omdb.js` | Adds the `OMDB_API_KEY` from `.env`, passes only known parameters to OMDb, and caches answers for 24 hours |
-| Router | `src/router.js` | Hash-based routes like `#/title/m1` |
-| Luna (browser) | `src/luna.js` | Sends the chat to the server and streams the reply back |
-| Luna (server) | `server/luna.js` | Calls Claude with the catalog and the user's list; keeps the API key server-side |
-| Server | `server/index.js`, `vite.config.js` | Serves the app and `POST /api/luna` |
+| App state | `src/store.jsx` | Who is signed in, their list (from the server), and the sample friends, chats and Luna chat (in the browser) |
+| Starter data | `src/data.js` | 16 starter titles (IMDb ids), 5 sample people, and the in-browser registry of titles |
+| API helper | `src/api.js` | `fetch` wrapper for our server |
+| Database | `server/db.js` | The SQLite file and its tables |
+| Accounts | `server/auth.js` | Sign up, sign in, sign out, session cookie, password hashing (scrypt) |
+| Catalogue and reviews | `server/titles.js` | Titles, search caching, OMDb lookups, ratings, comments, lists |
+| OMDb | `server/omdb.js` | The only place that talks to OMDb; the key stays here |
+| API routes | `server/api.js` | All `/api/*` routes, rate limits, cross-site protection |
+| Luna | `src/luna.js`, `server/luna.js` | Streams answers from Claude; sign-in required |
+| Servers | `server/index.js`, `vite.config.js` | `npm start` (production) and `npm run dev` |
 
-### Where data lives today
+### The tables that exist today (SQLite, file `data/popcorn.db`)
 
-Everything the user does is saved in the **browser's localStorage** under the key `popcorn-state-v1`:
+| Table | Holds |
+|---|---|
+| `users` | handle, display name, password hash |
+| `sessions` | sign-in sessions (the cookie value is stored hashed) |
+| `titles` | every title anyone has looked up, with all OMDb details; one row per IMDb id |
+| `search_cache` | searches already answered, so the next identical search needs no OMDb call |
+| `library_entries` | **everyone's** watchlist / watched status, star rating and comment: one row per member per title |
+| `id_aliases` | old id to new id for starter titles whose IMDb id was corrected |
 
-```js
-{
-  library: {
-    "m1": { status: "watched",   rating: 4, review: "Huge, loud, perfect.", addedAt: 1729660000000 },
-    "s2": { status: "watchlist", rating: 0, review: "",                     addedAt: 1729660500000 }
-  },
-  friends: ["u1", "u2"],
-  chats: {
-    "u1": [{ from: "me", text: "What did you think of Dune?", titleId: "m1", ts: 1729660100000 }]
-  },
-  luna: [{ role: "user", content: "What should I watch tonight?" }, { role: "assistant", content: "…" }]
-}
-```
+### Where the rest of the data lives
 
-This is fine for a demo, but it has limits:
-
-- Data stays on one device and one browser, and is lost if the browser is cleared.
-- There are no real accounts, so friends and chats are simulated.
-- Recommendations can only use one person's data, so "people like you also liked…" isn't possible.
-
-The database below fixes all three.
+Friends, chats and the Luna conversation are still saved in the browser's localStorage (key `popcorn-state-v1`), because the people in Friends are samples for now. Everything about titles, lists, ratings and comments is on the server.
 
 ---
 
 ## 4. The database
 
-**Recommended:** PostgreSQL. SQLite is fine to start with, since the schema below works in both with small changes.
+**Built today:** SQLite (a single file, no setup), with the six tables listed in section 3. **Planned:** PostgreSQL once the app needs several servers; the fuller design below works in both with small changes. The tables for friends, messages, review comments, the event log and precomputed recommendations are not built yet.
 
 ### Tables at a glance
 
@@ -281,21 +309,33 @@ The UI updates straight away and the server saves in the background (an "optimis
 
 ## 5. The API
 
-All routes need a signed-in user, and `me` means the current user.
+### Built today
+
+All routes are under `/api`. Reading is open to everyone; routes marked **account** need a signed-in member (a session cookie).
+
+| Method & path | Who | What it does |
+|---|---|---|
+| `POST /auth/register` · `POST /auth/login` · `POST /auth/logout` · `GET /auth/me` | anyone | Accounts and the current session |
+| `GET /catalog` | anyone | Every title in the shared catalogue, with community rating stats |
+| `GET /search?q=&kind=all\|movie\|show` | anyone | Searches the shared database first; asks OMDb only for searches nobody has made; saves what it finds |
+| `GET /titles/:imdbId` | anyone | One title (details fetched from OMDb the first time), the members' average, and every member's rating and comment |
+| `PUT /titles/:imdbId/entry` | account | Save my `{status, rating, review}` for a title |
+| `DELETE /titles/:imdbId/entry` | account | Remove it from my list |
+| `GET /me/library` | account | My watchlist and watched titles |
+| `POST /luna` | account | Ask Luna (streams text) |
+
+Safeguards: passwords are hashed with scrypt; sessions are HttpOnly, SameSite cookies; writes from other websites are refused; sign-in attempts and OMDb-triggering searches are rate-limited; all database access uses prepared statements; the OMDb key never leaves the server.
+
+### Planned
+
 
 | Method & path | What it does |
 |---|---|
-| `GET /api/titles?q=&kind=&genre=` | Search and filter the catalog |
-| `GET /api/titles/:id` | One title, with friends who rated it |
-| `GET /api/me/library?status=watched` | My List (watched or watchlist) |
-| `PUT /api/me/library/:titleId` | Add or update: `{status, rating, review}` |
-| `DELETE /api/me/library/:titleId` | Remove from My List |
 | `GET /api/users?q=` | Search people by name or @handle |
 | `POST /api/me/friends/:userId` · `DELETE …` | Add or remove a friend |
 | `GET /api/conversations` · `POST /api/conversations/:id/messages` | Friend chats (live updates via WebSocket) |
 | `POST /api/reviews/:userId/:titleId/comments` | Comment on a friend's review |
 | `GET /api/me/recommendations?limit=20` | "For you" list with reasons |
-| `POST /api/luna` | Ask Luna (already built, streams text) |
 
 ---
 
@@ -483,14 +523,9 @@ This keeps suggestions consistent between the "For you" page and Luna, and keeps
 
 ---
 
-## 8. Moving from today to the database
+## 8. Moving from the old single-user version
 
-When a user signs in for the first time, the app checks localStorage for `popcorn-state-v1`. If it finds data, it sends it once to `POST /api/me/import`. That route:
-
-1. Maps each sample title id (`m1`, `s2`, …) to the real `titles.id`.
-2. Inserts `library_entries` (status, rating, review, added date) and matching `events`.
-3. Adds friends and Luna history.
-4. On success, the browser clears the local copy and uses the API from then on.
+Earlier versions kept a person's list only in their browser. The first time someone signs in (or creates an account) in a browser that has such a list, the app imports it once: each title is looked up in the shared catalogue, then saved as a `library_entries` row (status, rating, comment). Titles the account already has are not overwritten. After the import the browser's copy is removed.
 
 ---
 
@@ -498,8 +533,8 @@ When a user signs in for the first time, the app checks localStorage for `popcor
 
 | Phase | What | Result |
 |---|---|---|
-| 1 | Accounts + database + `library_entries` API; swap `store.jsx` from localStorage to the API | Lists, ratings and reviews saved for real across devices |
-| 2 | Move the OMDb data (already used for details and search) into `titles` / `genres`; add TMDB if more is needed | Real posters and thousands of titles, stored once on the server |
+| 1 | **Done.** Accounts, SQLite database, lists, ratings and comments saved on the server | Lists, ratings and reviews saved for real across devices, visible to everyone |
+| 2 | **Done.** OMDb data stored once in the shared `titles` table, with search caching | Real posters and details; each title and search is fetched from OMDb only once |
 | 3 | Content + friend + quality scoring, "For you" row on Explore, reasons | First version of recommendations |
 | 4 | Real friends, live chat (WebSocket), comments on reviews | The social side becomes real |
 | 5 | Collaborative filtering once there are enough users; nightly job; "Not interested" | Smarter "people like you" suggestions |

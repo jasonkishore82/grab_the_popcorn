@@ -15,8 +15,8 @@ function tasteMatch(library, user) {
       .flatMap(([id]) => getTitle(id)?.genres || []),
   );
   if (!mine.size) return null;
-  const theirs = [...new Set(user.favs.flatMap((id) => getTitle(id).genres))];
-  return Math.round((100 * theirs.filter((g) => mine.has(g)).length) / theirs.length);
+  const theirs = [...new Set(user.favs.flatMap((id) => getTitle(id)?.genres ?? []))];
+  return theirs.length ? Math.round((100 * theirs.filter((g) => mine.has(g)).length) / theirs.length) : null;
 }
 
 function PersonCard({ user, index }) {
@@ -36,9 +36,9 @@ function PersonCard({ user, index }) {
       </div>
       <p className="bio">{user.bio}</p>
       <div className="fav-strip">
-        {user.favs.map((id) => (
-          <button key={id} onClick={() => go(`/title/${id}`)} title={getTitle(id).title}>
-            <Poster title={getTitle(id)} size="sm" />
+        {user.favs.map(getTitle).filter(Boolean).map((t) => (
+          <button key={t.id} onClick={() => go(`/title/${t.id}`)} title={t.title}>
+            <Poster title={t} size="sm" />
           </button>
         ))}
         <span className="fav-label">Favourites</span>

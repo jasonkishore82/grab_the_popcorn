@@ -5,8 +5,7 @@ import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import './env.js';
-import { handleLuna } from './luna.js';
-import { handleOmdb } from './omdb.js';
+import { handleApi, startBackgroundWork } from './api.js';
 
 const DIST = fileURLToPath(new URL('../dist', import.meta.url));
 const PORT = process.env.PORT || 3000;
@@ -14,8 +13,10 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
 
 createServer(async (req, res) => {
   const path = new URL(req.url, 'http://x').pathname;
-  if (path === '/api/luna') return handleLuna(req, res);
-  if (path === '/api/omdb') return handleOmdb(req, res);
+  if (path.startsWith('/api/')) {
+    req.url = req.url.slice(4); // the API routes are written without the /api prefix
+    return handleApi(req, res);
+  }
 
   const file = normalize(join(DIST, path === '/' ? 'index.html' : path));
   if (!file.startsWith(DIST)) {
@@ -30,4 +31,7 @@ createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(await readFile(join(DIST, 'index.html')));
   }
-}).listen(PORT, () => console.log(`Grab the Popcorn running at http://localhost:${PORT}`));
+}).listen(PORT, () => {
+  console.log(`Grab the Popcorn running at http://localhost:${PORT}`);
+  startBackgroundWork();
+});

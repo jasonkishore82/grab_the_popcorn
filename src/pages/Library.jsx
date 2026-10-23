@@ -8,7 +8,7 @@ import Icon from '../components/Icon';
 import { Empty, PageHead, Segmented } from '../components/ui';
 
 export default function Library() {
-  const { library } = useStore();
+  const { library, user, ready, openAuth } = useStore();
   const [tab, setTab] = useState('watched');
 
   const all = Object.entries(library)
@@ -16,7 +16,7 @@ export default function Library() {
     .filter((t) => t.title);
   const watched = all.filter((t) => t.status === 'watched');
   const rated = watched.filter((t) => t.rating > 0);
-  const minutes = watched.reduce((m, t) => m + (t.runtime || 0), 0);
+  const minutes = watched.filter((t) => t.type === 'movie').reduce((m, t) => m + (t.runtime || 0), 0);
   const items = all.filter((t) => t.status === tab).sort((a, b) => b.addedAt - a.addedAt);
 
   const stats = [
@@ -25,6 +25,25 @@ export default function Library() {
     { label: 'Avg. rating', value: rated.length ? (rated.reduce((s, t) => s + t.rating, 0) / rated.length).toFixed(1) : '–', icon: 'star' },
     { label: 'Hours of film', value: Math.round(minutes / 60), icon: 'clock' },
   ];
+
+  if (ready && !user) {
+    return (
+      <>
+        <PageHead eyebrow="Your collection" title="My List" subtitle="Everything you’ve watched, rated and saved for later." />
+        <Empty
+          icon="user"
+          title="Sign in to see your list"
+          text="Your watchlist, watched titles, ratings and reviews are saved to your account, so they follow you to any device."
+          action={
+            <div className="btn-row center">
+              <button className="btn btn-primary" onClick={() => openAuth('Sign in to see and build your list.')}>Sign in</button>
+              <button className="btn btn-secondary" onClick={() => openAuth('Create an account to save titles, rate and review them.', 'signup')}>Create account</button>
+            </div>
+          }
+        />
+      </>
+    );
+  }
 
   return (
     <>

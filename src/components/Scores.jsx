@@ -1,4 +1,4 @@
-import { useDetails } from '../store';
+import Icon from './Icon';
 
 export function Tomato({ size = 14, fresh = true }) {
   return (
@@ -9,46 +9,31 @@ export function Tomato({ size = 14, fresh = true }) {
   );
 }
 
-export function Bucket({ size = 14 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 16 16" aria-hidden="true">
-      <circle cx="5.2" cy="5" r="2.2" fill="#fff4dc" />
-      <circle cx="8" cy="3.8" r="2.5" fill="#fff4dc" />
-      <circle cx="10.8" cy="5" r="2.2" fill="#fff4dc" />
-      <path d="M3 6.5h10l-1.2 8a1 1 0 0 1-1 .8H5.2a1 1 0 0 1-1-.8z" fill="var(--accent)" />
-      <path d="M6.6 7v8M9.4 7v8" stroke="#1a1206" strokeWidth=".9" opacity=".5" />
-    </svg>
-  );
-}
-
 const metaTone = (n) => (n >= 61 ? 'good' : n >= 40 ? 'mixed' : 'bad');
 
-// Which scores to show. With OMDb data: Rotten Tomatoes critics, IMDb and Metacritic.
-// Without it, the built-in sample scores.
-function scoreList(title, d) {
+// The scores we can show: the community's own rating first, then Rotten Tomatoes, IMDb and Metacritic.
+function scoreList(title) {
   const out = [];
-  if (d) {
-    if (d.rt != null) out.push({ key: 'rt', icon: 'tomato', value: `${d.rt}%`, label: 'Critics', fresh: d.rt >= 60, tip: 'Rotten Tomatoes critics score' });
-    if (d.imdb != null) out.push({ key: 'imdb', icon: 'imdb', value: d.imdb.toFixed(1), label: d.imdbVotes ? `IMDb · ${d.imdbVotes} votes` : 'IMDb', tip: 'IMDb rating out of 10' });
-    if (d.meta != null) out.push({ key: 'meta', icon: 'meta', value: String(d.meta), label: 'Metascore', tone: metaTone(d.meta), tip: 'Metacritic score' });
+  const st = title.stats;
+  if (st?.ratingCount > 0) {
+    const n = st.ratingCount;
+    out.push({ key: 'community', icon: 'star', value: st.ratingAvg.toFixed(1), label: `Community · ${n} rating${n > 1 ? 's' : ''}`, tip: 'Average of our members’ ratings, out of 5' });
   }
-  if (!out.length) {
-    if (title.critics != null) out.push({ key: 'c', icon: 'tomato', value: `${title.critics}%`, label: 'Critics', fresh: title.critics >= 60, tip: 'Critics score' });
-    if (title.audience != null) out.push({ key: 'a', icon: 'bucket', value: `${title.audience}%`, label: 'Audience', tip: 'Audience score' });
-  }
+  if (title.rt != null) out.push({ key: 'rt', icon: 'tomato', value: `${title.rt}%`, label: 'Critics', fresh: title.rt >= 60, tip: 'Rotten Tomatoes critics score' });
+  if (title.imdb != null) out.push({ key: 'imdb', icon: 'imdb', value: title.imdb.toFixed(1), label: title.imdbVotes ? `IMDb · ${title.imdbVotes} votes` : 'IMDb', tip: 'IMDb rating out of 10' });
+  if (title.meta != null) out.push({ key: 'meta', icon: 'meta', value: String(title.meta), label: 'Metascore', tone: metaTone(title.meta), tip: 'Metacritic score' });
   return out;
 }
 
 function Mark({ s, size }) {
+  if (s.icon === 'star') return <span className="mark-star"><Icon name="star" size={size * 0.95} fill strokeWidth={0} /></span>;
   if (s.icon === 'tomato') return <Tomato size={size} fresh={s.fresh} />;
-  if (s.icon === 'bucket') return <Bucket size={size} />;
   if (s.icon === 'imdb') return <span className="mark mark-imdb" style={{ fontSize: size * 0.68 }}>IMDb</span>;
   return <span className={`mark mark-meta ${s.tone}`} style={{ fontSize: size * 0.58 }}>M</span>;
 }
 
 export default function Scores({ title, variant = 'inline' }) {
-  const d = useDetails(title.id);
-  const scores = scoreList(title, d);
+  const scores = scoreList(title);
   if (!scores.length) return null;
 
   if (variant === 'large') {

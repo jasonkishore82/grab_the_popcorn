@@ -19,7 +19,7 @@ const greeting = () => {
 };
 
 export default function Luna({ titleId }) {
-  const { luna, setLuna, library, friends } = useStore();
+  const { luna, setLuna, library, friends, user, openAuth } = useStore();
   const about = titleId && getTitle(titleId);
   const [text, setText] = useState(about ? `Is ${about.title} worth watching for me?` : '');
   const [busy, setBusy] = useState(false);
@@ -34,6 +34,7 @@ export default function Luna({ titleId }) {
   const send = async (q) => {
     q = q.trim();
     if (!q || busy) return;
+    if (!user) return openAuth('Sign in to ask Luna.');
     const history = [...luna, { role: 'user', content: q }];
     setLuna([...history, { role: 'assistant', content: '' }]);
     setText('');

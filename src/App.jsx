@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRoute } from './router';
 import { useTheme } from './theme';
 import { useStore } from './store';
-import { TITLES, getUser } from './data';
+import { getUser } from './data';
 import Icon from './components/Icon';
 import Avatar from './components/Avatar';
+import AuthDialog from './components/AuthDialog';
 import Explore from './pages/Explore';
 import TitleDetail from './pages/TitleDetail';
 import Library from './pages/Library';
@@ -40,13 +41,22 @@ function Brand({ compact = false }) {
 
 export default function App() {
   const [page = '', param] = useRoute();
-  const { library, friends, toasts, ensureMany } = useStore();
+  const { user, library, friends, toasts, openAuth, logout } = useStore();
   const [theme, setTheme] = useTheme();
+  const [menu, setMenu] = useState(false);
+  const menuRef = useRef(null);
 
-  // Fill in posters, plots and ratings for the built-in catalogue (cached, so only the first visit costs requests).
   useEffect(() => {
-    ensureMany(TITLES);
-  }, [ensureMany]);
+    if (!menu) return undefined;
+    const close = (e) => (e.key === 'Escape' || (e.type === 'mousedown' && !menuRef.current?.contains(e.target))) && setMenu(false);
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', close);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', close);
+    };
+  }, [menu]);
+
   const listCount = Object.keys(library).length;
 
   let view;
@@ -91,6 +101,27 @@ export default function App() {
           </div>
         </a>
 
+        {user ? (
+          <div className="account-card">
+            <Avatar user={user} size={34} />
+            <div className="grow">
+              <strong className="ellipsis">{user.name}</strong>
+              <span className="muted small ellipsis">@{user.handle}</span>
+            </div>
+            <button className="btn btn-quiet btn-icon" onClick={logout} aria-label="Sign out" title="Sign out">
+              <Icon name="logout" size={17} />
+            </button>
+          </div>
+        ) : (
+          <div className="account-card guest">
+            <p>Join to rate, review and save titles. Everyone can see your ratings.</p>
+            <div className="btn-row">
+              <button className="btn btn-primary btn-sm" onClick={() => openAuth()}>Sign in</button>
+              <button className="btn btn-secondary btn-sm" onClick={() => openAuth(undefined, 'signup')}>Create account</button>
+            </div>
+          </div>
+        )}
+
         <div className="theme-switch" role="group" aria-label="Colour theme">
           <button className={theme === 'light' ? 'on' : ''} onClick={() => setTheme('light')} aria-pressed={theme === 'light'}>
             <Icon name="sun" size={15} /> Light
@@ -111,6 +142,35 @@ export default function App() {
         >
           <Icon name={theme === 'light' ? 'contrast' : 'sun'} size={19} />
         </button>
+        {user ? (
+          <div className="popover-wrap" ref={menuRef}>
+            <button className="account-btn" onClick={() => setMenu((m) => !m)} aria-label="Account" aria-expanded={menu}>
+              <Avatar user={user} size={30} />
+            </button>
+            {menu && (
+              <div className="popover popover-right" role="menu">
+                <div className="popover-user">
+                  <strong>{user.name}</strong>
+                  <span className="muted small">@{user.handle}</span>
+                </div>
+                <button
+                  className="popover-item"
+                  role="menuitem"
+                  onClick={() => {
+                    setMenu(false);
+                    logout();
+                  }}
+                >
+                  <Icon name="logout" size={16} /> Sign out
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button className="btn btn-primary btn-sm" onClick={() => openAuth()}>
+            Sign in
+          </button>
+        )}
       </header>
 
       <main className="content">
@@ -127,6 +187,8 @@ export default function App() {
           </a>
         ))}
       </nav>
+
+      <AuthDialog />
 
       <div className="toasts" aria-live="polite">
         {toasts.map((t) => (

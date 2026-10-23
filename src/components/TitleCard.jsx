@@ -6,26 +6,17 @@ import { go } from '../router';
 import { useStore } from '../store';
 
 export default function TitleCard({ title, index = 0 }) {
-  const { library, saveTitle, adoptTitle, notify } = useStore();
+  const { library, saveTitle, notify } = useStore();
   const saved = library[title.id];
   const open = () => go(`/title/${title.id}`);
 
   const quickAdd = (e) => {
     e.stopPropagation();
-    adoptTitle(title); // titles from OMDb search must be remembered before they can be saved
-    saveTitle(title.id, { status: 'watchlist' });
-    notify(`Added “${title.title}” to your watchlist`);
+    if (saveTitle(title.id, { status: 'watchlist' })) notify(`Added “${title.title}” to your watchlist`);
   };
 
   return (
-    <article
-      className="card"
-      style={{ '--i': index % 12 }}
-      onClick={open}
-      onKeyDown={(e) => e.key === 'Enter' && open()}
-      tabIndex={0}
-      aria-label={title.title}
-    >
+    <article className="card" style={{ '--i': index % 12 }} onClick={open} onKeyDown={(e) => e.key === 'Enter' && open()} tabIndex={0} aria-label={title.title}>
       <div className="card-poster">
         <Poster title={title} />
         {saved ? (

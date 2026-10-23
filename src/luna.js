@@ -18,7 +18,8 @@ export async function askLuna({ history, context, onText, signal }) {
   }
   const type = res.headers.get('content-type') || '';
   if (!res.ok || !type.startsWith('text/plain')) {
-    return onText(`${ERROR_MARK}Luna isn't available here. Run the app with \`npm run dev\` or \`npm start\`.`);
+    const data = type.includes('json') ? await res.json().catch(() => null) : null;
+    return onText(`${ERROR_MARK}${data?.error || "Luna isn't available here. Run the app with `npm run dev` or `npm start`."}`);
   }
   const reader = res.body.getReader();
   const decoder = new TextDecoder();

@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
 import { kindLabel } from '../data';
-import { useDetails } from '../store';
 
-// Real poster from OMDb when we have one; generated key art underneath as the fallback.
+// Real poster (from OMDb, stored in the shared catalogue) when there is one; generated key art underneath as the fallback.
 const variant = (id) => [...id].reduce((a, c) => a + c.charCodeAt(0), 0) % 3;
 
 export default function Poster({ title, size = 'md' }) {
-  const d = useDetails(title.id);
-  const src = d?.poster || title.poster || null;
+  const src = title.poster || null;
   const [state, setState] = useState('idle'); // idle | loaded | failed
   useEffect(() => setState('idle'), [src]);
 
@@ -18,15 +16,7 @@ export default function Poster({ title, size = 'md' }) {
   return (
     <div className={`poster poster-${size} pv${variant(title.id)} ${loaded ? 'has-img' : ''}`} style={{ '--h': title.hue }}>
       {showImg && (
-        <img
-          className="poster-img"
-          src={src}
-          alt=""
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          onLoad={() => setState('loaded')}
-          onError={() => setState('failed')}
-        />
+        <img className="poster-img" src={src} alt="" loading="lazy" referrerPolicy="no-referrer" onLoad={() => setState('loaded')} onError={() => setState('failed')} />
       )}
       {withText && (
         <div className="poster-text">
