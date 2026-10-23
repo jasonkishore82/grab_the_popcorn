@@ -12,6 +12,7 @@ import Library from './pages/Library';
 import Friends from './pages/Friends';
 import Chat from './pages/Chat';
 import Showcase from './pages/Showcase';
+import DomeLab from './pages/DomeLab';
 import { ResetPassword, VerifyEmail } from './pages/Account';
 import { Notice } from './components/ui';
 
@@ -64,6 +65,7 @@ export default function App() {
   else if (page === 'friends') view = <Friends />;
   else if (page === 'chat') view = <Chat id={param} />;
   else if (page === 'u' || page === 'showcase') view = <Showcase key={param || user?.handle || ''} handle={param} />;
+  else if (page === 'dome-lab') view = <DomeLab />;
   else if (page === 'verify') view = <VerifyEmail token={param} />;
   else if (page === 'reset') view = <ResetPassword token={param} />;
   else view = <Explore />;
