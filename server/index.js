@@ -27,4 +27,4 @@ createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(await readFile(join(DIST, 'index.html')));
   }
-}).listen(PORT, () => console.log(`🍿 http://localhost:${PORT}`));
+}).listen(PORT, () => console.log(`Grab the Popcorn running at http://localhost:${PORT}`));

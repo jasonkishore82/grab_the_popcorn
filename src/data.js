@@ -28,7 +28,7 @@ export const USERS = [
 
 export const REPLIES = [
   'Oh I loved that one!',
-  'Still on my watchlist, no spoilers 🙈',
+  'Still on my watchlist, no spoilers please.',
   'The ending though…',
   'Rewatch party this weekend?',
   'Honestly overrated, fight me.',

@@ -41,10 +41,10 @@ Every action the user takes (rate, review, add to watchlist, mark watched, add a
 |---|---|---|
 | **Star rating** (1–5) | Title page → "Your review" | Strongest signal. 4–5 = liked, 1–2 = disliked. |
 | **Review / comment** (text) | Title page → "Your review" | Explains *why*. Used as a backup signal when there is no star rating. |
-| **Watched** | Title page → "✓ Watched" | User has seen it. Never recommend it again. Weak "liked" signal if not rated. |
-| **Watchlist** | Title page → "+ Watchlist" | User wants to see it. Shown in its own row, and counts as a weak "interested" signal. |
-| **Remove** | Title page → "Remove" | Drops the entry. |
-| **Friends** | Friends page → "+ Add" | Friends' taste adds a "social" boost to titles they loved. |
+| **Watched** | Title page → "Mark as watched" | User has seen it. Never recommend it again. Weak "liked" signal if not rated. |
+| **Watchlist** | Title page → "Watchlist" | User wants to see it. Shown in its own row, and counts as a weak "interested" signal. |
+| **Remove** | Title page → bin icon | Drops the entry. |
+| **Friends** | Friends page → "Add friend" | Friends' taste adds a "social" boost to titles they loved. |
 | **Chat messages** | Messages page | Stored for the conversation. Not used for recommendations. |
 | **Questions to Luna** | Luna page | Stored as the Luna conversation. |
 | **Searches and filters** | Explore page | Not stored today. Could be logged later as a light interest signal. |
@@ -244,7 +244,7 @@ CREATE TABLE recommendations (
   user_id      BIGINT REFERENCES users(id)  ON DELETE CASCADE,
   title_id     BIGINT REFERENCES titles(id) ON DELETE CASCADE,
   score        REAL NOT NULL,        -- 0..1
-  reasons      JSONB NOT NULL,       -- ["Because you rated Dune: Part Two 5★", "Maya loved it"]
+  reasons      JSONB NOT NULL,       -- ["Because you rated Dune: Part Two 5 stars", "Maya loved it"]
   computed_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (user_id, title_id)
 );
@@ -301,7 +301,7 @@ All routes need a signed-in user, and `me` means the current user.
 
 ### Goal
 
-For each user, rank every title they **haven't watched** and explain why each one is suggested ("Because you rated Dune 5★", "Maya loved it").
+For each user, rank every title they **haven't watched** and explain why each one is suggested ("Because you rated Dune 5 stars", "Maya loved it").
 
 ### How it works in one picture
 
@@ -327,11 +327,11 @@ Each library entry gets a **signal** between −2 and +2, centred on "neutral" (
 
 | Input | Signal | Why |
 |---|---|---|
-| Rated 5★ | +2 | Loved it |
-| Rated 4★ | +1 | Liked it |
-| Rated 3★ | 0 | Neutral |
-| Rated 2★ | −1 | Disliked it |
-| Rated 1★ | −2 | Hated it |
+| Rated 5 stars | +2 | Loved it |
+| Rated 4 stars | +1 | Liked it |
+| Rated 3 stars | 0 | Neutral |
+| Rated 2 stars | −1 | Disliked it |
+| Rated 1 stars | −2 | Hated it |
 | Watched, no rating, has review | from review sentiment (−2…+2) | Claude reads the comment and scores it |
 | Watched, no rating, no review | +0.5 | Finished it, so probably okay |
 | On watchlist | +0.5 | Interested, but hasn't seen it |
@@ -394,11 +394,11 @@ HAVING COUNT(*) >= 3;          -- ignore pairs with too few shared users
 ### Step 4: Friend score
 
 ```
-friend(title) = (number of your friends who rated it 4★+ or marked it a favourite)
+friend(title) = (number of your friends who rated it 4+ stars or marked it a favourite)
                 / (number of your friends)
 ```
 
-A friend who rated it 1–2★ subtracts instead, so the score can go below 0 and is then clamped to 0.
+A friend who rated it 1–2 stars subtracts instead, so the score can go below 0 and is then clamped to 0.
 
 ### Step 5: Quality score
 
@@ -427,7 +427,7 @@ If a part can't be computed (for example `collab` during cold start), drop it an
 4. **Reasons:** keep the top 1–2 things that pushed the score up, as text:
    - biggest content match → *"Because you liked Sci-Fi like Dune: Part Two"*
    - biggest collab neighbour → *"People who loved Interstellar loved this"*
-   - friend → *"Maya and Leo rated it 5★"*
+   - friend → *"Maya and Leo rated it 5 stars"*
    - quality → *"99% with critics"*
 
 ### Worked example
@@ -436,9 +436,9 @@ Our user has rated three titles. Their friends are Maya and Leo.
 
 | Title | Genres | Rating | Signal |
 |---|---|---|---|
-| Dune: Part Two | Sci-Fi, Adventure | 5★ | +2 |
-| Interstellar | Sci-Fi, Drama | 4★ | +1 |
-| Past Lives | Drama, Romance | 2★ | −1 |
+| Dune: Part Two | Sci-Fi, Adventure | 5 stars | +2 |
+| Interstellar | Sci-Fi, Drama | 4 stars | +1 |
+| Past Lives | Drama, Romance | 2 stars | −1 |
 
 **Taste profile:** Sci-Fi = (2 + 1) / 2 = **+1.5** · Adventure = **+2** · Drama = (1 − 1) / 2 = **0** · Romance = **−1**. Every other genre is 0.
 
@@ -464,7 +464,7 @@ Results go in the `recommendations` table, so the "For you" page is a single qui
 
 ### Checking that it works
 
-- **Offline test:** hide each user's most recent 5★ rating, run the recommender, and check how often that title shows up in their top 10 (called "hit rate @10"). Compare it against a baseline that just sorts by quality score.
+- **Offline test:** hide each user's most recent 5 stars rating, run the recommender, and check how often that title shows up in their top 10 (called "hit rate @10"). Compare it against a baseline that just sorts by quality score.
 - **In the app:** track how often users click, watchlist or rate a suggested title (logged in `events`), and add a "Not interested" button that counts as a −1 signal.
 
 ---

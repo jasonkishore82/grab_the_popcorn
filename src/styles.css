@@ -540,7 +540,8 @@ textarea::placeholder { color: var(--muted); }
 .lm-body > :last-child { margin-bottom: 0; }
 .lm-body strong { font-weight: 600; color: #fff; }
 .lm-body code { font: 0.9em var(--mono); background: var(--surface-3); padding: 1px 5px; border-radius: 4px; }
-.lm.error .lm-body { color: #f2a59c; }
+.lm-error { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: rgba(229, 72, 59, 0.1); border: 1px solid rgba(229, 72, 59, 0.3); color: #f2a59c; font-size: 14px; }
+.lm-error svg { flex-shrink: 0; margin-top: 3px; }
 .lm-titles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin-top: 14px; }
 .lm-title { display: flex; align-items: center; gap: 12px; padding: 8px 12px 8px 8px; border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--line); text-align: left; transition: border-color 0.15s; }
 .lm-title:hover { border-color: var(--luna-line); }

@@ -1,5 +1,5 @@
 // Browser side of Luna: streams a reply from the server's /api/luna endpoint.
-const ERROR_MARK = '\n\n⚠️ ';
+const ERROR_MARK = '\n\n[error] '; // must match server/luna.js
 
 export async function askLuna({ history, context, onText, signal }) {
   // Don't resend error notices to the model.
@@ -30,3 +30,9 @@ export async function askLuna({ history, context, onText, signal }) {
 }
 
 export const isError = (text) => text.includes(ERROR_MARK);
+
+// Splits a reply into the normal text and an optional error notice.
+export function splitError(text) {
+  const i = text.indexOf(ERROR_MARK);
+  return i < 0 ? [text, null] : [text.slice(0, i), text.slice(i + ERROR_MARK.length)];
+}

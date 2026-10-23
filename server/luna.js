@@ -4,6 +4,7 @@ import { TITLES, USERS } from '../src/data.js';
 
 const MODEL = 'claude-opus-5-5';
 const MAX_HISTORY = 30;
+const ERROR_MARK = '\n\n[error] '; // the browser shows text after this as an error notice
 
 let client;
 const getClient = () => (client ??= new Anthropic());
@@ -19,6 +20,7 @@ Help with recommendations, quick facts, "what should I watch tonight", compariso
 
 Style:
 - Warm and concise. Usually 2-6 short sentences or a short list. Plain text with light markdown (bold, bullet lists) only.
+- Never use emoji.
 - Never spoil plot twists or endings unless the user explicitly asks for spoilers.
 - When you recommend something from the app's catalog below, write its title exactly as listed so the app can link it. You may mention titles outside the catalog, but say they aren't in the app yet.
 - If you're unsure about a fact, say so rather than guessing.
@@ -122,7 +124,7 @@ export async function handleLuna(req, res) {
     else if (err instanceof Anthropic.RateLimitError) msg = 'Luna is busy right now. Try again in a few seconds.';
     else if (!(err instanceof Anthropic.APIError) && /api key|apiKey|authToken/i.test(String(err?.message)))
       msg = 'Luna is not set up: the server has no ANTHROPIC_API_KEY.';
-    res.write(`\n\n⚠️ ${msg}`);
+    res.write(`${ERROR_MARK}${msg}`);
     res.end();
   }
 }

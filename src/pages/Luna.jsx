@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { TITLES, getTitle } from '../data';
 import { useStore } from '../store';
-import { askLuna, isError } from '../luna';
+import { askLuna, isError, splitError } from '../luna';
 import { go } from '../router';
 import Poster from '../components/Poster';
 import Icon from '../components/Icon';
@@ -135,14 +135,20 @@ function LunaMessage({ msg, typing }) {
       </div>
     );
   }
+  const [body, error] = splitError(msg.content);
   const mentioned = typing
     ? []
-    : TITLES.filter((t) => msg.content.includes(t.title)).sort((a, b) => msg.content.indexOf(a.title) - msg.content.indexOf(b.title));
+    : TITLES.filter((t) => body.includes(t.title)).sort((a, b) => body.indexOf(a.title) - body.indexOf(b.title));
   return (
     <div className={`lm lm-luna ${isError(msg.content) ? 'error' : ''}`}>
       <div className="moon" style={{ '--s': '28px' }} />
       <div className="lm-body">
-        {msg.content ? <Markdown text={msg.content} /> : <span className="dots"><i /><i /><i /></span>}
+        {body ? <Markdown text={body} /> : !error && <span className="dots"><i /><i /><i /></span>}
+        {error && (
+          <p className="lm-error">
+            <Icon name="alert" size={15} /> {error}
+          </p>
+        )}
         {mentioned.length > 0 && (
           <div className="lm-titles">
             {mentioned.map((t) => (
