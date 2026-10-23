@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import { StoreProvider } from './store';
 import './styles.css';
+import './flat.css';
 
 // If a screen ever fails, show a way back instead of a blank page.
 class ErrorBoundary extends Component {

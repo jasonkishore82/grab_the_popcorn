@@ -10,7 +10,8 @@ A minimal React UI for saving your favourite movies & shows, finding friends and
 - **My List** – your Watched and Watchlist collections with ratings and reviews
 - **Friends** – search people by name or @handle, add/remove friends, see their favourites
 - **Messages** – one-to-one chat with friends, attach a movie/show card to any message
-- **Light and dark mode** – dark by default; switch with the Light/Dark control at the bottom of the sidebar (or the button in the phone header). Your choice is remembered
+- **Flat, early-iOS design** – white and light grey surfaces, one blue accent, thin large titles, hairline dividers, iMessage-style chat bubbles and iOS-style segmented controls, with no shadows or gradients (styles in `src/flat.css`, on top of `src/styles.css`)
+- **Light and dark mode** – light by default; switch with the Light/Dark control at the bottom of the sidebar (or the button in the phone header). Your choice is remembered
 - **People, friends and chat** – find people by username, send friend requests, chat with friends (attach any title), and open anyone's profile
 - **Showcase** – an Instagram-style page for what you have watched: a holographic profile card ([React Bits ProfileCard](https://reactbits.dev)), your numbers, a grid of everything watched (with ×times badges) and a Reviews tab. Add a bio and photo with Edit profile. Anyone can open `#/showcase/<username>`
 - **Accounts and shared reviews** – sign up, then rate and comment on any title; everyone sees the community rating and each member's review

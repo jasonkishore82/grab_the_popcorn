@@ -45,7 +45,7 @@ export default function Friends() {
   if (ready && !user) {
     return (
       <>
-        <PageHead eyebrow="Community" title="Friends" subtitle="Find people by username, compare Watchcases and chat." />
+        <PageHead eyebrow="Community" title="Friends" subtitle="Find people by username, compare Showcases and chat." />
         <Empty
           icon="users"
           title="Sign in to find friends"
@@ -73,7 +73,7 @@ export default function Friends() {
 
   return (
     <>
-      <PageHead eyebrow="Community" title="Friends" subtitle="Find people by username, open their Watchcase and chat about what you watch." />
+      <PageHead eyebrow="Community" title="Friends" subtitle="Find people by username, open their Showcase and chat about what you watch." />
       <div className="toolbar">
         <SearchField value={q} onChange={setQ} placeholder="Search by username or name, e.g. @maya" />
       </div>

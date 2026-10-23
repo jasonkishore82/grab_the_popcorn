@@ -57,7 +57,7 @@ export default function AuthDialog() {
 
   const subtitle = forgot
     ? 'Enter the email you signed up with and we will send you a link.'
-    : authDialog.reason || (signup ? 'Join to rate, review, make friends and chat. Everyone can see your ratings and Watchcase.' : 'Sign in to rate, review and chat with friends.');
+    : authDialog.reason || (signup ? 'Join to rate, review, make friends and chat. Everyone can see your ratings and Showcase.' : 'Sign in to rate, review and chat with friends.');
 
   return (
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && closeAuth()}>

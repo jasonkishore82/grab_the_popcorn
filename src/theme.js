@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 
 const KEY = 'popcorn-theme';
-const COLORS = { dark: '#0b0a09', light: '#ffffff' };
+const COLORS = { dark: '#000000', light: '#ffffff' };
 
 const read = () => {
   try {
-    return localStorage.getItem(KEY) === 'light' ? 'light' : 'dark';
+    return localStorage.getItem(KEY) === 'dark' ? 'dark' : 'light';
   } catch {
     return 'dark';
   }
 };
 
-// Dark is the default; a choice made with the switch is remembered.
+// Light is the default; a choice made with the switch is remembered.
 export function useTheme() {
   const [theme, setThemeState] = useState(read);
 
