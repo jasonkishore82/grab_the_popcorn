@@ -65,7 +65,7 @@ export default function AuthDialog() {
         <button className="btn btn-quiet btn-icon modal-close" onClick={closeAuth} aria-label="Close">
           <Icon name="x" size={18} />
         </button>
-        <img src="/logo.png" alt="" className="modal-logo" width="530" height="640" />
+        <p className="wordmark modal-wordmark">Clap<em>Boxes</em></p>
         <h2 id="auth-title">{TITLES[mode]}</h2>
         <p className="muted modal-sub">{subtitle}</p>
 

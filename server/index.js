@@ -32,6 +32,6 @@ createServer(async (req, res) => {
     res.end(await readFile(join(DIST, 'index.html')));
   }
 }).listen(PORT, () => {
-  console.log(`Grab the Popcorn running at http://localhost:${PORT}`);
+  console.log(`ClapBoxes running at http://localhost:${PORT}`);
   startBackgroundWork();
 });

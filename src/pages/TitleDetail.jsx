@@ -273,7 +273,7 @@ export default function TitleDetail({ id }) {
           <span className="rate-label">{RATING_LABELS[entry?.rating || 0] || 'Tap a star'}</span>
         </div>
         <textarea
-          placeholder={user ? 'What did you think? Everyone on Grab the Popcorn can read this.' : 'Sign in to write a review.'}
+          placeholder={user ? 'What did you think? Everyone on ClapBoxes can read this.' : 'Sign in to write a review.'}
           value={entry?.review || ''}
           readOnly={!user}
           onFocus={needAccount}

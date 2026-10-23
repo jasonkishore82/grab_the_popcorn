@@ -1,6 +1,4 @@
-<p align="center"><img src="public/logo.png" width="180" alt="Grab the Popcorn logo"></p>
-
-# Grab the Popcorn
+# ClapBoxes
 
 A minimal React UI for saving your favourite movies & shows, finding friends and chatting about what you watch — think Rotten Tomatoes + Letterboxd + a group chat.
 

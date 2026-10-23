@@ -1,4 +1,4 @@
-# How Grab the Popcorn Works
+# How ClapBoxes Works
 
 This doc explains how the app works today (accounts and a shared database are built), how the rest of the social side will follow, and how the recommendation system will pick what to suggest next.
 
@@ -21,7 +21,7 @@ This doc explains how the app works today (accounts and a shared database are bu
 
 ## 1. The big picture
 
-Grab the Popcorn is a place to keep track of movies and shows, rate and review them, chat with friends about them, and get suggestions on what to watch next.
+ClapBoxes is a place to keep track of movies and shows, rate and review them, chat with friends about them, and get suggestions on what to watch next.
 
 ```mermaid
 flowchart LR

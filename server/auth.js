@@ -70,7 +70,7 @@ export const appUrl = (req) => (process.env.APP_URL || `${isHttps(req) ? 'https'
 async function sendVerification(req, user) {
   const url = `${appUrl(req)}/#/verify/${createToken(user.id, 'verify', 24 * HOUR)}`;
   const { html, text } = verifyEmail(user.name, url);
-  await sendMail({ to: user.email, subject: 'Confirm your email for Grab the Popcorn', html, text });
+  await sendMail({ to: user.email, subject: 'Confirm your email for ClapBoxes', html, text });
 }
 
 export function register(req, res, input) {
@@ -100,7 +100,7 @@ export async function forgotPassword(req, email) {
   if (!row) return; // the caller answers the same way either way, so addresses cannot be probed
   const url = `${appUrl(req)}/#/reset/${createToken(row.id, 'reset', HOUR)}`;
   const { html, text } = resetEmail(row.name, url);
-  await sendMail({ to: row.email, subject: 'Reset your Grab the Popcorn password', html, text });
+  await sendMail({ to: row.email, subject: 'Reset your ClapBoxes password', html, text });
 }
 
 export function resetPassword(token, password) {

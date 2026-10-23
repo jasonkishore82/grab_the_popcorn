@@ -192,7 +192,7 @@ export default function Explore() {
         </section>
       ) : (
         <>
-          {loved.length > 0 && <Row title="Loved by members" subtitle="Highest average rating from people on Grab the Popcorn" items={loved.slice(0, 10)} />}
+          {loved.length > 0 && <Row title="Loved by members" subtitle="Highest average rating from people on ClapBoxes" items={loved.slice(0, 10)} />}
           {critics.length >= 3 && <Row title="Critics’ picks" subtitle="Highest on Rotten Tomatoes" items={critics.slice(0, 10)} />}
           {shows.length > 0 && <Row title="Series worth the binge" subtitle="Top-rated shows" items={shows.slice(0, 10)} />}
           {fresh.length > 0 && <Row title="Just added by members" subtitle="Titles someone searched for and saved to the shared catalogue" items={fresh.slice(0, 12)} />}

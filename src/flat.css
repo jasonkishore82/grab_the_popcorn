@@ -309,3 +309,9 @@ textarea:focus, .auth-form input:focus, .composer input:focus { border-color: va
 .luna-card span { color: var(--luna); }
 .lm-body code, .shimmer i { background: var(--surface-3); }
 .dots i { background: var(--luna); }
+
+/* ---------- ClapBoxes wordmark ---------- */
+.brand { padding: 0 10px; }
+.wordmark { font-family: var(--sans); font-weight: 700; font-size: 24px; letter-spacing: -0.04em; line-height: 1; color: var(--text); }
+.wordmark em { font-style: normal; color: var(--accent-text); }
+.modal-wordmark { font-size: 28px; margin-bottom: 14px; }

@@ -20,7 +20,7 @@ async function smtp() {
 }
 
 export async function sendMail({ to, subject, text, html }) {
-  const from = process.env.EMAIL_FROM || 'Grab the Popcorn <onboarding@resend.dev>';
+  const from = process.env.EMAIL_FROM || 'ClapBoxes <onboarding@resend.dev>';
   if (process.env.RESEND_API_KEY) {
     const res = await fetch(`${process.env.RESEND_BASE_URL || 'https://api.resend.com'}/emails`, {
       method: 'POST',
@@ -54,4 +54,4 @@ ${lines.map((l) => `<p style="line-height:1.5">${esc(l)}</p>`).join('')}
 export const verifyEmail = (name, url) =>
   layout(`Welcome, ${name}`, ['Confirm your email address so you can reset your password if you ever need to.', 'This link works for 24 hours.'], 'Confirm email', url);
 export const resetEmail = (name, url) =>
-  layout('Reset your password', [`Hi ${name}, we got a request to reset your Grab the Popcorn password.`, 'This link works for one hour. If it was not you, ignore this email and nothing changes.'], 'Choose a new password', url);
+  layout('Reset your password', [`Hi ${name}, we got a request to reset your ClapBoxes password.`, 'This link works for one hour. If it was not you, ignore this email and nothing changes.'], 'Choose a new password', url);
