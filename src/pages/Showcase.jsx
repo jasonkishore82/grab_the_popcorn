@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import FriendsDome from '../components/FriendsDome';
+import DomeSheet from '../components/DomeSheet';
 import { kindLabel, shapeTitle } from '../data';
 import { useStore } from '../store';
 import { useThemeName } from '../theme';
@@ -65,6 +67,13 @@ export default function Showcase({ handle }) {
   const [open, setOpen] = useState(null);
   const [editing, setEditing] = useState(false);
   const [reload, setReload] = useState(0);
+  const [dome, setDome] = useState(null);
+  const [domeEditing, setDomeEditing] = useState(false);
+
+  useEffect(() => {
+    if (tab !== 'dome' || !who) return;
+    api(`/users/${who}/dome`).then(setDome).catch(() => setDome({ members: [] }));
+  }, [tab, who]);
 
   useEffect(() => {
     if (!who) return undefined;
@@ -160,6 +169,9 @@ export default function Showcase({ handle }) {
         <button role="tab" aria-selected={tab === 'reviews'} className={tab === 'reviews' ? 'on' : ''} onClick={() => setTab('reviews')}>
           <Icon name="pen" size={15} /> Reviews <span className="count">{reviews.length}</span>
         </button>
+        <button role="tab" aria-selected={tab === 'dome'} className={tab === 'dome' ? 'on' : ''} onClick={() => setTab('dome')}>
+          <Icon name="users" size={15} /> Dome
+        </button>
       </div>
 
       {tab === 'grid' &&
@@ -204,6 +216,25 @@ export default function Showcase({ handle }) {
           <Empty icon="pen" title="No reviews yet" text={`${isMe ? 'Write' : `${first} has not written`} a comment on a watched title and it will show here.`} />
         ))}
 
+      {tab === 'dome' &&
+        (!dome ? null : dome.members.length ? (
+          <>
+            <div className="dome-stage"><FriendsDome members={dome.members} /></div>
+            <div className="dome-foot">
+              <span className="muted small">{dome.members.length} friend{dome.members.length === 1 ? '' : 's'}. Drag to turn, tap a picture to enlarge.</span>
+              {isMe && <button className="btn btn-secondary btn-sm" onClick={() => setDomeEditing(true)}>Edit dome</button>}
+            </div>
+          </>
+        ) : (
+          <Empty
+            icon="users"
+            title="No friends in the dome"
+            text={isMe ? 'Choose friends to show here.' : `${first} has not added anyone yet.`}
+            action={isMe ? <button className="btn btn-primary" onClick={() => setDomeEditing(true)}>Choose friends</button> : undefined}
+          />
+        ))}
+
+      {domeEditing && <DomeSheet members={dome?.members ?? []} onChange={setDome} onClose={() => setDomeEditing(false)} />}
       {open && <Post item={open} onClose={() => setOpen(null)} />}
       {editing && <EditProfile user={owner} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); setReload((n) => n + 1); }} />}
     </>
