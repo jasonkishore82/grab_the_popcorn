@@ -56,13 +56,13 @@ export function removeFriend(meId, handle) {
 export function listFriends(meId) {
   const rows = db
     .prepare(
-      `SELECT u.handle, u.name, f.status, f.user_id AS requester FROM friendships f
+      `SELECT u.handle, u.name, u.avatar, f.status, f.user_id AS requester FROM friendships f
        JOIN users u ON u.id = CASE WHEN f.user_id = ? THEN f.friend_id ELSE f.user_id END
        WHERE f.user_id = ? OR f.friend_id = ? ORDER BY u.name`,
     )
     .all(meId, meId, meId);
   return {
-    friends: rows.filter((r) => r.status === 'accepted').map(person),
+    friends: rows.filter((r) => r.status === 'accepted').map(domePerson),
     incoming: rows.filter((r) => r.status === 'pending' && r.requester !== meId).map(person),
     outgoing: rows.filter((r) => r.status === 'pending' && r.requester === meId).map(person),
   };
