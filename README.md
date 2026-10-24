@@ -1,1 +1,55 @@
-# grab_the_popcorn
+# ClapBoxes
+
+A minimal React UI for saving your favourite movies & shows, finding friends and chatting about what you watch — think Rotten Tomatoes + Letterboxd + a group chat.
+
+## Features
+- **Explore** – search movies and shows, filter by type and genre, see critic and audience scores
+- **Title page** – add to Watchlist / mark Watched, rate 1–5 stars, write a review, start a discussion with a friend
+- **My List** – your Watched and Watchlist collections with ratings and reviews
+- **Friends** – search people by name or @handle, add/remove friends, see their favourites
+- **Messages** – one-to-one chat with friends, attach a movie/show card to any message
+- **Flat, early-iOS design** – white and light grey surfaces, one blue accent, thin large titles, hairline dividers, iMessage-style chat bubbles and iOS-style segmented controls, with no shadows or gradients (styles in `src/flat.css`, on top of `src/styles.css`)
+- **Light and dark mode** – light by default; switch with the Light/Dark control at the bottom of the sidebar (or the button in the phone header). Your choice is remembered
+- **People, friends and chat** – find people by username, send friend requests, chat with friends (attach any title), and open anyone's profile
+- **Showcase** – an Instagram-style page for what you have watched: a holographic profile card ([React Bits ProfileCard](https://reactbits.dev)), your numbers, a grid of everything watched (with ×times badges) and a Reviews tab. Add a bio and photo with Edit profile. Anyone can open `#/showcase/<username>`
+- **Accounts and shared reviews** – sign up, then rate and comment on any title; everyone sees the community rating and each member's review
+
+## Run it
+```bash
+npm install
+cp .env.example .env     # then paste your keys into .env
+npm run dev
+```
+
+For production: `npm run build && npm start` (serves the app and the API routes on port 3000).
+
+## API keys (`.env`)
+| Variable | What it does | Get one |
+|---|---|---|
+| `OMDB_API_KEY` | Fills in posters, plot, director, cast, rating, awards and real Rotten Tomatoes / IMDb / Metacritic scores, and lets you search titles beyond the built-in catalogue | https://www.omdbapi.com/apikey.aspx (free: 1,000 requests a day; activate it from the email) |
+| `RESEND_API_KEY` **or** `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | Sends the email-confirmation and password-reset emails. Use Resend, or Zoho Mail (host `smtp.zoho.com`, port 465, an app-specific password) | https://resend.com/ · https://www.zoho.com/mail/ |
+| `EMAIL_FROM`, `APP_URL` | Sender address (must be on a domain you verified with the provider) and your site's public address for links in emails | |
+
+`.env` is git-ignored, so keys are never committed. If the variables are already set in your environment (for example as hosting secrets), those win over the file. Restart the server after changing `.env`.
+
+The keys stay on the server and are never sent to the browser. Without an OMDb key everything else still works with the 16 starter titles and whatever members have already added to the shared catalogue; Explore shows a short notice.
+
+### How OMDb and the shared database work together
+- Every title anyone searches for or opens is saved once in a shared table. The next person who searches for it gets it from the database, not from OMDb.
+- Every search is saved too, so repeating a search (by anyone) makes no OMDb request. This keeps you well inside OMDb's free limit.
+- Ratings and comments are saved in a shared table and are public: if Alice rates and comments on Interstellar, Bob sees her review when he opens it.
+- Details of the design: [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md).
+
+## Accounts and data
+- You can browse and read everything without an account. Rating, commenting, saving to your list and chatting need one (create it from the sidebar or the dialog that appears).
+- Everything is stored in a SQLite database file, `data/popcorn.db` (git-ignored, created automatically; override with `DATABASE_FILE`). **Back this file up**: it holds every member's account, list, rating and comment. Needs Node 22.13 or newer.
+- Passwords are hashed (scrypt), sign-in uses an HttpOnly cookie, and nothing secret is sent to the browser.
+- Sign-up asks for an email. We send a confirmation link and use it for password resets. If no email provider is set up, the links are printed in the server console instead, so you can still develop and test. Email sending with **Resend** was tested against a stand-in server; **Zoho/SMTP** is wired up but untested, so send yourself a test sign-up once.
+- Friends: send a request by username; chat opens once it is accepted. Chat updates every few seconds (no websockets yet).
+- Profiles are public: anyone can open `#/u/<username>` to see someone's Watchcase (watched titles, times watched, ratings, reviews). Watchlists and emails are private.
+
+## Notes
+- Everything is stored on the server.
+
+## How it works
+See [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) for the architecture, the planned database (ratings, reviews, watchlist, watched) and how the recommendation system works.

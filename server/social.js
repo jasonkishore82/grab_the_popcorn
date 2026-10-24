@@ -1,0 +1,221 @@
+// People: search, profiles with their Watchcase, friend requests, and chat between friends.
+import { createHash } from 'node:crypto';
+import { db, now } from './db.js';
+import { HttpError } from './http.js';
+import { libraryFor, resolveId, toJson } from './titles.js';
+
+const like = (s) => s.replace(/[\\%_]/g, '\\$&');
+const person = (u) => ({ handle: u.handle, name: u.name });
+
+export function userByHandle(handle) {
+  const u = db.prepare('SELECT id, handle, name, bio, avatar, created_at FROM users WHERE handle = ?').get(String(handle ?? ''));
+  if (!u) throw new HttpError(404, 'Person not found');
+  return u;
+}
+
+// ---------- friends ----------
+
+function pair(a, b) {
+  return db.prepare('SELECT * FROM friendships WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)').get(a, b, b, a);
+}
+
+// How `me` relates to `other`: none | friends | requested (I asked) | incoming (they asked)
+export function relation(meId, otherId) {
+  if (!meId || meId === otherId) return 'none';
+  const row = pair(meId, otherId);
+  if (!row) return 'none';
+  if (row.status === 'accepted') return 'friends';
+  return row.user_id === meId ? 'requested' : 'incoming';
+}
+
+export const areFriends = (a, b) => relation(a, b) === 'friends';
+
+export function addFriend(meId, handle) {
+  const other = userByHandle(handle);
+  if (other.id === meId) throw new HttpError(400, 'That is you');
+  const row = pair(meId, other.id);
+  if (!row) {
+    const pending = db.prepare("SELECT COUNT(*) n FROM friendships WHERE user_id = ? AND status = 'pending'").get(meId).n;
+    if (Number(pending) >= 50) throw new HttpError(429, 'You have too many pending requests');
+    db.prepare("INSERT INTO friendships (user_id, friend_id, status, created_at) VALUES (?, ?, 'pending', ?)").run(meId, other.id, now());
+  } else if (row.status === 'pending' && row.friend_id === meId) {
+    db.prepare("UPDATE friendships SET status = 'accepted' WHERE user_id = ? AND friend_id = ?").run(row.user_id, row.friend_id); // they asked first
+  }
+  return { relation: relation(meId, other.id) };
+}
+
+// Unfriend, decline, or cancel a request: all remove the row.
+export function removeFriend(meId, handle) {
+  const other = userByHandle(handle);
+  db.prepare('DELETE FROM friendships WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)').run(meId, other.id, other.id, meId);
+  // Only friends can be in a dome, so ending the friendship takes each of you out of the other's.
+  db.prepare('DELETE FROM dome_members WHERE (owner_id = ? AND member_id = ?) OR (owner_id = ? AND member_id = ?)').run(meId, other.id, other.id, meId);
+  return { relation: 'none' };
+}
+
+export function listFriends(meId) {
+  const rows = db
+    .prepare(
+      `SELECT u.handle, u.name, u.avatar, f.status, f.user_id AS requester FROM friendships f
+       JOIN users u ON u.id = CASE WHEN f.user_id = ? THEN f.friend_id ELSE f.user_id END
+       WHERE f.user_id = ? OR f.friend_id = ? ORDER BY u.name`,
+    )
+    .all(meId, meId, meId);
+  return {
+    friends: rows.filter((r) => r.status === 'accepted').map(domePerson),
+    incoming: rows.filter((r) => r.status === 'pending' && r.requester !== meId).map(person),
+    outgoing: rows.filter((r) => r.status === 'pending' && r.requester === meId).map(person),
+  };
+}
+
+// ---------- finding people ----------
+
+export function searchPeople(me, rawQuery) {
+  const q = String(rawQuery ?? '').trim().replace(/^@/, '').slice(0, 40);
+  if (q.length < 2) return [];
+  const rows = db
+    .prepare(
+      `SELECT u.id, u.handle, u.name,
+              (SELECT COUNT(*) FROM library_entries e WHERE e.user_id = u.id AND e.status = 'watched') AS watched
+       FROM users u WHERE (u.handle LIKE ? ESCAPE '\\' OR u.name LIKE ? ESCAPE '\\') AND u.id <> ?
+       ORDER BY (u.handle LIKE ? ESCAPE '\\') DESC, u.handle LIMIT 20`,
+    )
+    .all(`%${like(q)}%`, `%${like(q)}%`, me?.id ?? 0, `${like(q)}%`);
+  return rows.map((u) => ({ ...person(u), watched: Number(u.watched), relation: relation(me?.id, u.id) }));
+}
+
+// ---------- a person's page: their Watchcase (everything they have watched) ----------
+
+export function profile(me, handle) {
+  const u = userByHandle(handle);
+  const watched = libraryFor(u.id, 'watched');
+  const rated = watched.filter((w) => w.entry.rating > 0);
+  return {
+    user: { ...person(u), bio: u.bio ?? '', avatar: u.avatar ?? null, joinedAt: u.created_at },
+    isMe: me?.id === u.id,
+    relation: relation(me?.id, u.id),
+    stats: {
+      titlesWatched: watched.length,
+      totalWatches: watched.reduce((n, w) => n + w.entry.timesWatched, 0),
+      ratings: rated.length,
+      averageRating: rated.length ? Math.round((rated.reduce((n, w) => n + w.entry.rating, 0) / rated.length) * 10) / 10 : null,
+      reviews: watched.filter((w) => w.entry.review).length,
+      friends: Number(db.prepare("SELECT COUNT(*) n FROM friendships WHERE status = 'accepted' AND (user_id = ? OR friend_id = ?)").get(u.id, u.id).n),
+    },
+    watchcase: watched,
+  };
+}
+
+// ---------- chat ----------
+
+const messageJson = (m, meId) => ({ id: Number(m.id), mine: m.sender_id === meId, text: m.body, titleId: m.title_id, ts: m.created_at });
+
+export function conversations(meId) {
+  const { friends } = listFriends(meId);
+  const last = db.prepare(
+    `SELECT * FROM messages WHERE (sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?) ORDER BY id DESC LIMIT 1`,
+  );
+  const unread = db.prepare('SELECT COUNT(*) n FROM messages WHERE recipient_id = ? AND sender_id = ? AND read_at IS NULL');
+  const out = friends.map((f) => {
+    const id = userByHandle(f.handle).id;
+    const m = last.get(meId, id, id, meId);
+    return { ...f, last: m ? messageJson(m, meId) : null, unread: Number(unread.get(meId, id).n) };
+  });
+  out.sort((a, b) => (b.last?.ts ?? 0) - (a.last?.ts ?? 0));
+  return { conversations: out, unread: out.reduce((n, c) => n + c.unread, 0) };
+}
+
+function friendOrThrow(meId, handle) {
+  const other = userByHandle(handle);
+  if (!areFriends(meId, other.id)) throw new HttpError(403, 'You can chat with people once you are friends');
+  return other;
+}
+
+export function messagesWith(meId, handle, after = 0) {
+  const other = friendOrThrow(meId, handle);
+  const rows = after
+    ? db.prepare('SELECT * FROM messages WHERE id > ? AND ((sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?)) ORDER BY id LIMIT 200').all(after, meId, other.id, other.id, meId)
+    : db.prepare('SELECT * FROM (SELECT * FROM messages WHERE (sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?) ORDER BY id DESC LIMIT 100) ORDER BY id').all(meId, other.id, other.id, meId);
+  db.prepare('UPDATE messages SET read_at = ? WHERE recipient_id = ? AND sender_id = ? AND read_at IS NULL').run(now(), meId, other.id);
+  return { messages: rows.map((m) => messageJson(m, meId)) };
+}
+
+export function sendMessage(meId, handle, { text, titleId }) {
+  const other = friendOrThrow(meId, handle);
+  const body = String(text ?? '').trim();
+  if (!body && !titleId) throw new HttpError(400, 'Write a message first');
+  if (body.length > 2000) throw new HttpError(400, 'Messages can be up to 2000 characters');
+  let title = null;
+  if (titleId) {
+    title = resolveId(String(titleId));
+    if (!db.prepare('SELECT 1 FROM titles WHERE id = ?').get(title)) throw new HttpError(404, 'Title not found');
+  }
+  const info = db.prepare('INSERT INTO messages (sender_id, recipient_id, body, title_id, created_at) VALUES (?, ?, ?, ?, ?)').run(meId, other.id, body || 'Check this out', title, now());
+  return { message: messageJson(db.prepare('SELECT * FROM messages WHERE id = ?').get(info.lastInsertRowid), meId) };
+}
+export { toJson };
+
+// Bio and profile photo (a small image stored with the account).
+export function updateProfile(meId, { bio, avatar }) {
+  if (bio !== undefined) {
+    if (typeof bio !== 'string' || bio.trim().length > 160) throw new HttpError(400, 'Bio can be up to 160 characters');
+    db.prepare('UPDATE users SET bio = ? WHERE id = ?').run(bio.trim() || null, meId);
+  }
+  if (avatar !== undefined) {
+    if (avatar !== null && (typeof avatar !== 'string' || avatar.length > 200_000 || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(avatar))) {
+      throw new HttpError(400, 'Use a JPEG, PNG or WebP photo under about 150 KB');
+    }
+    db.prepare('UPDATE users SET avatar = ? WHERE id = ?').run(avatar, meId);
+  }
+  return { ok: true };
+}
+
+// ---------- Friends Dome ----------
+
+export const DOME_LIMIT = 40;
+
+const avatarTag = (avatar) => createHash('sha1').update(avatar).digest('hex').slice(0, 10);
+
+// Pictures are served as their own cacheable images, so a dome response stays small.
+export function avatarFor(handle) {
+  const u = userByHandle(handle);
+  const m = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(u.avatar ?? '');
+  if (!m) throw new HttpError(404, 'No picture');
+  return { type: m[1], bytes: Buffer.from(m[2], 'base64'), tag: `"${avatarTag(u.avatar)}"` };
+}
+
+const domePerson = (u) => ({
+  ...person(u),
+  avatarUrl: u.avatar ? `/api/users/${u.handle}/avatar?v=${avatarTag(u.avatar)}` : null,
+});
+
+// Anyone can see a dome, like a profile. Members who stopped being friends are never listed.
+export function domeOf(handle) {
+  const owner = userByHandle(handle);
+  const rows = db
+    .prepare(
+      `SELECT u.handle, u.name, u.avatar FROM dome_members d
+       JOIN users u ON u.id = d.member_id
+       WHERE d.owner_id = ? ORDER BY d.added_at, u.handle`,
+    )
+    .all(owner.id);
+  return { owner: person(owner), limit: DOME_LIMIT, members: rows.map(domePerson) };
+}
+
+export function addToDome(meId, handle) {
+  const other = userByHandle(handle);
+  if (!areFriends(meId, other.id)) throw new HttpError(403, 'You can only add friends to your dome');
+  const has = db.prepare('SELECT 1 FROM dome_members WHERE owner_id = ? AND member_id = ?').get(meId, other.id);
+  if (!has) {
+    const n = Number(db.prepare('SELECT COUNT(*) n FROM dome_members WHERE owner_id = ?').get(meId).n);
+    if (n >= DOME_LIMIT) throw new HttpError(409, `Your dome is full (${DOME_LIMIT} friends)`);
+    db.prepare('INSERT INTO dome_members (owner_id, member_id, added_at) VALUES (?, ?, ?)').run(meId, other.id, now());
+  }
+  return domeOf(db.prepare('SELECT handle FROM users WHERE id = ?').get(meId).handle);
+}
+
+export function removeFromDome(meId, handle) {
+  const other = userByHandle(handle);
+  db.prepare('DELETE FROM dome_members WHERE owner_id = ? AND member_id = ?').run(meId, other.id);
+  return domeOf(db.prepare('SELECT handle FROM users WHERE id = ?').get(meId).handle);
+}
