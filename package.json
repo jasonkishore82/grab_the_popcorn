@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "node server/index.js"
+    "api": "python -m uvicorn backend.main:app --host 127.0.0.1 --port 47123",
+    "start": "python -m uvicorn backend.main:app --host 0.0.0.0 --port 3000"
   },
   "dependencies": {
     "@hugeicons/core-free-icons": "^4.3.5",

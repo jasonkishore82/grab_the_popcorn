@@ -3,10 +3,9 @@ import FriendsDome from '../components/FriendsDome';
 import DomeSheet from '../components/DomeSheet';
 import { kindLabel, shapeTitle } from '../data';
 import { useStore } from '../store';
-import { useThemeName } from '../theme';
 import { api } from '../api';
 import { go } from '../router';
-import ProfileCard from '../components/ProfileCard';
+import ProfileLanyard from '../components/ProfileLanyard';
 import EditProfile from '../components/EditProfile';
 import PersonCard from '../components/PersonCard';
 import Poster from '../components/Poster';
@@ -59,7 +58,6 @@ function Post({ item, onClose }) {
 // An Instagram-style page for what someone has watched: their card, numbers, and a grid.
 export default function Showcase({ handle }) {
   const { user, ready, openAuth, library, addTitles, saved, social } = useStore();
-  const theme = useThemeName();
   const who = handle || user?.handle;
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -104,10 +102,6 @@ export default function Showcase({ handle }) {
   const reviews = items.filter((i) => i.entry.review);
   const first = owner.name.split(' ')[0];
 
-  const contact = isMe
-    ? { text: 'Edit', run: () => setEditing(true) }
-    : { friends: { text: 'Message', run: () => go(`/chat/${owner.handle}`) }, incoming: { text: 'Accept', run: () => api(`/friends/${owner.handle}`, { method: 'POST' }).then(() => setReload((n) => n + 1)) }, requested: { text: 'Requested', run: () => {} }, none: { text: 'Add friend', run: () => (user ? api(`/friends/${owner.handle}`, { method: 'POST' }).then(() => setReload((n) => n + 1)) : openAuth('Sign in to add friends.')) } }[relation];
-
   const numbers = [
     [stats.titlesWatched, 'watched'],
     [stats.totalWatches, 'watches'],
@@ -118,23 +112,9 @@ export default function Showcase({ handle }) {
   return (
     <>
       <div className="showcase-head">
-        <ProfileCard
-          name={owner.name}
-          title={owner.bio || `${stats.titlesWatched} title${stats.titlesWatched === 1 ? '' : 's'} watched`}
-          handle={owner.handle}
-          status={`${stats.totalWatches} watches · ${stats.friends} friends`}
-          statusColor="#fec540"
-          contactText={contact.text}
-          onContactClick={contact.run}
-          avatarUrl={owner.avatar || portrait(owner)}
-          iconUrl="/logo.png"
-          holo={0.8}
-          glare={0.5}
-          tiltStrength={12}
-          parallax={8}
-          theme={theme}
-          intro
-        />
+        <div className="showcase-lanyard">
+          <ProfileLanyard person={{ avatar: owner.avatar || portrait(owner), name: owner.name, handle: owner.handle }} anchor="left" size={0.3} strapLength={1} cardColor="#8f9a8f" />
+        </div>
         <div className="showcase-info">
           <div className="showcase-name">
             <h1>@{owner.handle}</h1>

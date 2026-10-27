@@ -172,6 +172,7 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   background: var(--surface-3); color: var(--text-2);
   font: 500 11px/1 var(--mono);
 }
+.sidebar .account-card { margin-top: auto; }
 .side-section { display: flex; flex-direction: column; gap: 2px; }
 .side-label { padding: 0 12px 8px; font: 500 10.5px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
 .side-friend { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 10px; color: var(--text-2); font-size: 13.5px; }
@@ -769,7 +770,14 @@ body { transition: background-color 0.25s, color 0.25s; }
 .profile-card { max-width: 340px; }
 
 /* ---------- Showcase ---------- */
-.showcase-head { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 48px; align-items: center; margin: 8px 0 36px; }
+.showcase-head { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 48px; align-items: center; margin: 8px 0 150px; }
+.showcase-head { position: relative; }
+.showcase-lanyard { position: absolute; z-index: 0; top: -400px; height: 960px; left: -44px; width: 760px; max-width: calc(100% + 88px); }
+.showcase-lanyard .lanyard { overflow: visible; }
+.showcase-head ~ * { position: relative; z-index: 1; pointer-events: none; }
+.showcase-head ~ * :is(button, a, input, textarea, select, li) { pointer-events: auto; }
+.showcase-head > .showcase-info { position: relative; z-index: 1; grid-column: 2; pointer-events: none; }
+.showcase-info button, .showcase-info a, .showcase-info input { pointer-events: auto; }
 .showcase-info { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .showcase-name { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .showcase-name h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(32px, 4vw, 48px); line-height: 1; }

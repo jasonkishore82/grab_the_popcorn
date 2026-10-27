@@ -72,8 +72,8 @@ export default function AuthDialog() {
         <form onSubmit={submit} className="auth-form">
           {!forgot && (
             <label>
-              <span>Username</span>
-              <input value={form.handle} onChange={set('handle')} autoComplete="username" autoFocus required minLength={3} maxLength={20} pattern="[A-Za-z0-9_]{3,20}" title="3 to 20 letters, numbers or underscores" placeholder="e.g. maya_watches" />
+              <span>{signup ? 'Username' : 'Username or email'}</span>
+              <input value={form.handle} onChange={set('handle')} autoComplete="username" autoFocus required minLength={3} maxLength={signup ? 20 : 254} pattern={signup ? '[A-Za-z0-9_]{3,20}' : undefined} title={signup ? '3 to 20 letters, numbers or underscores' : undefined} placeholder={signup ? 'e.g. maya_watches' : 'username or you@example.com'} />
             </label>
           )}
           {signup && (

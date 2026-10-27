@@ -827,7 +827,13 @@ const Lanyard = ({
     });
     frontMaterial.onBeforeCompile = injectFoil;
     backMaterial.onBeforeCompile = injectFoil;
-    const edgeMaterial = new THREE.MeshPhysicalMaterial();
+    // The faces sit almost on top of the card body; pull them forward so the body never flickers through.
+    for (const m of [frontMaterial, backMaterial]) {
+      m.polygonOffset = true;
+      m.polygonOffsetFactor = -2;
+      m.polygonOffsetUnits = -2;
+    }
+    const edgeMaterial = new THREE.MeshPhysicalMaterial({ polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
     const metalMaterial = new THREE.MeshStandardMaterial({ metalness: 1 });
     const bandMaterial = new THREE.MeshPhysicalMaterial({
       map: strapTexture,

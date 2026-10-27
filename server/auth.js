@@ -112,7 +112,8 @@ export function resetPassword(token, password) {
 }
 
 export function login(req, res, { handle, password }) {
-  const row = db.prepare('SELECT * FROM users WHERE handle = ?').get(String(handle ?? '').trim());
+  const id = String(handle ?? '').trim();
+  const row = db.prepare('SELECT * FROM users WHERE handle = ? OR (email IS NOT NULL AND email = ?)').get(id, id.toLowerCase());
   const ok = checkPassword(String(password ?? ''), row ? row.password_hash : DUMMY);
   if (!row || !ok) throw new HttpError(401, 'Wrong handle or password');
   startSession(req, res, row.id);

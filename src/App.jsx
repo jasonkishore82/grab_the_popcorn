@@ -5,6 +5,7 @@ import { useStore } from './store';
 import { api } from './api';
 import Icon from './components/Icon';
 import Avatar from './components/Avatar';
+import Clapboard from './components/Clapboard';
 import AuthDialog from './components/AuthDialog';
 import Explore from './pages/Explore';
 import TitleDetail from './pages/TitleDetail';
@@ -26,6 +27,7 @@ const NAV = [
 function Brand() {
   return (
     <a href="#/" className="brand" aria-label="ClapBoxes home">
+      <Clapboard size={30} />
       <span className="wordmark">
         Clap<em>Boxes</em>
       </span>
@@ -82,6 +84,10 @@ export default function App() {
               {n.key === 'friends' && social.incoming.length > 0 && <span className="nav-count unread">{social.incoming.length}</span>}
             </a>
           ))}
+          <a href={user ? `#/u/${user.handle}` : '#/showcase'} className={user && page === 'u' && param === user.handle ? 'active' : ''}>
+            <Icon name="user" size={18} />
+            <span>My Profile</span>
+          </a>
         </nav>
 
         {social.friends.length > 0 && (
